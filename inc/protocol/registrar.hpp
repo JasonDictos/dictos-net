@@ -10,7 +10,7 @@ std::map<std::string, TYPE> &PrefixMap()
 		{"tcp", TYPE::TCPv4},
 		{"tcpv4", TYPE::TCPv4},
 		{"udp", TYPE::UDP},
-		{"unix", TYPE::Unix},
+		{"unix", TYPE::UnixDomain},
 		{"file", TYPE::File},
 		{"pipe", TYPE::Pipe},
 		{"tcpv6", TYPE::TCPv6},

@@ -47,7 +47,7 @@ inline Address & Address::operator = (const std::string &addr)
 
 inline unsigned short Address::port() const
 {
-	if (m_protocol == PROTOCOL_TYPE::Pipe || m_protocol == PROTOCOL_TYPE::Unix)
+	if (m_protocol == PROTOCOL_TYPE::Pipe || m_protocol == PROTOCOL_TYPE::UnixDomain)
 		DCORE_THROW(RuntimeError, "Address type does not support a port number");
 	return m_port;
 }
