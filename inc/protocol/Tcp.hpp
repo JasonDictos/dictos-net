@@ -113,8 +113,10 @@ public:
 		);
 	}
 
+	// We lazily instantiate these as the class is used as a server or a resolving connector
 	std::unique_ptr<tcp::acceptor> m_acceptor;
 	std::unique_ptr<tcp::resolver> m_resolver;
+
 	mutable tcp::socket m_socket;
 };
 

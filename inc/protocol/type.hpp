@@ -8,7 +8,7 @@ namespace dictos::net::protocol {
 		TCPv4,
 		TCPv6,
 		UDP,
-		Unix,
+		UnixDomain,
 		File,
 		Pipe
 	};
@@ -29,8 +29,8 @@ inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol
 			return stream << "TCPv6";
 		case TYPE::UDP:
 			return stream << "UDP";
-		case TYPE::Unix:
-			return stream << "Unix";
+		case TYPE::UnixDomain:
+			return stream << "UnixDomain";
 		case TYPE::File:
 			return stream << "File";
 		case TYPE::Pipe:

@@ -13,9 +13,9 @@ source_group("Net" FILES ${NetDeps})
 
 # Link to Catch2
 hunter_add_package(Catch)
-find_package(Catch CONFIG REQUIRED)
+find_package(Catch2 CONFIG REQUIRED)
 
-target_link_libraries(NetTest DictosCore DictosNet Catch::Catch)
+target_link_libraries(NetTest DictosCore DictosNet Catch)
 
 add_test(NetTest NetTest)
 

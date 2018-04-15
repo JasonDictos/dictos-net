@@ -7,7 +7,7 @@ namespace dictos::net {
  * it uses json as its core translation type, other serialization targets may be
  * possible, hence the name of this class is kept generic, however json provides
  * basic types most easily represented across every major language out there so
- * its a good type system for any rpc serialization type.
+ * its a good type system for any rpc serialization.
  */
 class Command
 {

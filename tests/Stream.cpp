@@ -64,6 +64,7 @@ TEST_CASE("Stream::Basic")
 		{
 			LOG(test, "Server - Error sig called:", e, '\n', e.traceString());
 			net::GlobalContext().stop();
+			failed = true;
 		}
 	);
 	auto c2 = client->ErrorSig.connect(
