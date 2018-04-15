@@ -266,7 +266,7 @@ function(hunter_gate_download dir)
       WRITE
       "${cmakelists}"
       "cmake_minimum_required(VERSION 3.0)\n"
-      "project(HunterDownload LANGUAGES C CXX)\n"
+      "project(HunterDownload LANGUAGES NONE)\n"
       "include(ExternalProject)\n"
       "ExternalProject_Add(\n"
       "    Hunter\n"
@@ -541,3 +541,4 @@ macro(HunterGate)
     set_property(GLOBAL PROPERTY HUNTER_GATE_DONE YES)
   endif()
 endmacro()
+
