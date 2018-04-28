@@ -60,8 +60,6 @@ target_link_libraries(DictosNet INTERFACE
 # Define headers for this library. PUBLIC headers are used for
 # compiling the library, and will be added to consumers' build
 # paths.
-message("$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
-
 target_include_directories(
 	DictosNet INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
