@@ -21,9 +21,6 @@ endif()
 # Declare our project and version
 project(DictosNet VERSION 0.1 LANGUAGES C CXX)
 
-# Setup our own platform settings
-include(cmake/plat.cmake)
-
 # boost filesystem
 hunter_add_package(Boost COMPONENTS fiber context system)
 

@@ -17,3 +17,9 @@ DChain.sln
 CTestTestFile.cmake
 DChainConfig.cmake
 :w
+CTestTestfile.cmake
+DictosNetConfig.cmake
+tests/CTestTestfile.cmake
+tests/NetTest_CXX_None_cotire.cmake
+tests/NetTest_CXX_cotire.cmake
+tests/cotire/
