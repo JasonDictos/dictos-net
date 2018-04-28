@@ -40,10 +40,6 @@ file(GLOB_RECURSE DictosNetInc [LIST_DIRECTORIES false]
 	${CMAKE_CURRENT_LIST_DIR}/inc/*.h
 )
 
-# Build a solution tree
-#source_group(TREE src FILES ${DictosNetSrc})
-#source_group(TREE inc FILES ${DictosNetInc})
-
 # Declare dictos::net lib
 add_library(
 	DictosNet INTERFACE
@@ -64,17 +60,11 @@ target_link_libraries(DictosNet INTERFACE
 # Define headers for this library. PUBLIC headers are used for
 # compiling the library, and will be added to consumers' build
 # paths.
+message("$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>")
+
 target_include_directories(
 	DictosNet INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/inc>
-)
-
-# Transfer all definitions to this target so all projects inherit them from our exported
-# config file
-target_compile_definitions(
-	DictosNet
-  	INTERFACE
-	$ENV{DCORE_COMPILE_DEFINITIONS}
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/inc>
 )
 
 # Setup a useful export file for inclusion in other projects
