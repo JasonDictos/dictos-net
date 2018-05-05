@@ -54,7 +54,7 @@ inline unsigned short Address::port() const
 
 inline std::string Address::ip() const
 {
-	if (m_protocol != PROTOCOL_TYPE::TCPv4 && m_protocol != PROTOCOL_TYPE::TCPv6)
+	if (m_protocol != PROTOCOL_TYPE::Tcp && m_protocol != PROTOCOL_TYPE::Tcp)
 		DCORE_THROW(RuntimeError, "Address type does not support an ip");
 	return m_address.to_string();
 }
@@ -92,10 +92,14 @@ inline Address::IpAddress Address::validate(const std::string &__address, unsign
 		DCORE_THROW(InvalidArgument, "Un-recognized address:", address, ec);
 
 	// If tcp fetch port
-	if (type == PROTOCOL_TYPE::TCPv4 || type == PROTOCOL_TYPE::TCPv6 || type == PROTOCOL_TYPE::UDP)
-	{
-		if (!port.empty())
-			_port = string::toNumber<unsigned short>(port);
+	switch (type) {
+		case PROTOCOL_TYPE::Tcp:
+		case PROTOCOL_TYPE::Udp:
+		case PROTOCOL_TYPE::WebSocket:
+		case PROTOCOL_TYPE::SslWebSocket:
+			if (!port.empty())
+				_port = string::toNumber<unsigned short>(port);
+		break;
 	}
 
 	// And return the ip address object

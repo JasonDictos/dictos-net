@@ -22,7 +22,10 @@ public:
 	typedef std::function<void(const dictos::error::Exception &, OP)> ErrorCallback;
 
 	AbstractProtocol(Address addr, config::Context &config, ErrorCallback ecb) :
-		m_config(config), m_localAddress(std::move(addr)), m_ecb(std::move(ecb)), m_service(GlobalContext())
+		m_config(config),
+	   	m_localAddress(std::move(addr)),
+	   	m_ecb(std::move(ecb)),
+	   	m_service(GlobalContext())
 	{
 	}
 
@@ -45,6 +48,7 @@ public:
 	Address getRemoteAddress() const { return m_localAddress; }
 
 protected:
+
 	/**
 	 * Returns true if ec was set, and along the way sends the exception
 	 * through our error signal.

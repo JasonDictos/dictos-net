@@ -7,13 +7,17 @@ using TYPE = dictos::net::protocol::TYPE;
 std::map<std::string, TYPE> &PrefixMap()
 {
 	static std::map<std::string, TYPE> prefixMap = {
-		{"tcp", TYPE::TCPv4},
-		{"tcpv4", TYPE::TCPv4},
-		{"udp", TYPE::UDP},
+		{"tcp", TYPE::Tcp},
+		{"tcpv4", TYPE::Tcp},
+		{"tcpv6", TYPE::Tcp},
+		{"ssl", TYPE::Ssl},
+		{"tls", TYPE::Ssl},
+		{"ws", TYPE::WebSocket},
+		{"wss", TYPE::SslWebSocket},
+		{"udp", TYPE::Udp},
 		{"unix", TYPE::UnixDomain},
 		{"file", TYPE::File},
 		{"pipe", TYPE::Pipe},
-		{"tcpv6", TYPE::TCPv6},
 	};
 
 	return prefixMap;

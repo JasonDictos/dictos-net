@@ -5,13 +5,14 @@ namespace dictos::net::protocol {
 	enum class TYPE
 	{
 		Init,
-		TCPv4,
-		TCPv6,
-		UDP,
+		Tcp,
+		Ssl,
+		Udp,
 		UnixDomain,
 		File,
 		Pipe,
-		WebSocket
+		WebSocket,
+		SslWebSocket
 	};
 }
 
@@ -24,12 +25,10 @@ inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol
 	{
 		case TYPE::Init:
 			return stream << "Init";
-		case TYPE::TCPv4:
-			return stream << "TCPv4";
-		case TYPE::TCPv6:
-			return stream << "TCPv6";
-		case TYPE::UDP:
-			return stream << "UDP";
+		case TYPE::Tcp:
+			return stream << "Tcp";
+		case TYPE::Ssl:
+			return stream << "Ssl";
 		case TYPE::UnixDomain:
 			return stream << "UnixDomain";
 		case TYPE::File:
@@ -38,6 +37,8 @@ inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol
 			return stream << "Pipe";
 		case TYPE::WebSocket:
 			return stream << "WebSocket";
+		case TYPE::SslWebSocket:
+			return stream << "SslWebSocket";
 		default:
 			DCORE_ASSERT(!"Invalid protocol type ");
 			return stream << "Invalid(" << static_cast<uint32_t>(type) << ")";

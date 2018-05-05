@@ -9,6 +9,7 @@ namespace dictos::net {
 		Read,
 		Write,
 		Resolve,
+		SslHandshake,
 	};
 
 }

@@ -7,6 +7,14 @@ using namespace dictos;
 TEST_CASE("Address::Basic")
 {
 	Address address("tcp://127.0.0.1:555");
-	REQUIRE(address.protocol() == PROTOCOL_TYPE::TCPv4);
+	REQUIRE(address.protocol() == PROTOCOL_TYPE::Tcp);
+	REQUIRE(address.port() == 555);
+
+	Address address("ws://127.0.0.1:555");
+	REQUIRE(address.protocol() == PROTOCOL_TYPE::WebSocket);
+	REQUIRE(address.port() == 555);
+
+	Address address("wss://127.0.0.1:555");
+	REQUIRE(address.protocol() == PROTOCOL_TYPE::SslWebSocket);
 	REQUIRE(address.port() == 555);
 }
