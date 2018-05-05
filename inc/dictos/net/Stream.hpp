@@ -201,7 +201,10 @@ protected:
 			return *section;
 
 		static config::Section section("net_stream", {
-				{"readAhead", Size(), "The amount of data to buffer in the read ahead queue."}
+				{"private_key_path", file::path(), "Path to client private ke (for client based auth)y"},
+				{"client_cert_file", file::path(), "Path to client cert file key (for client based auth)"},
+				{"cert_chain_File", file::path(), "Path to cert chain file (for peer certificate validation)"},
+				{"verify_peer", true, "Whether to verify the peer" }
 			}
 		);
 

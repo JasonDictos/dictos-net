@@ -23,3 +23,4 @@ tests/NetTest_CXX_None_cotire.cmake
 tests/NetTest_CXX_cotire.cmake
 tests/cotire/
 tests/NetTest
+*_cotire.cmake

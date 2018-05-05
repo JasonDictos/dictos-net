@@ -10,7 +10,8 @@ namespace dictos::net::protocol {
 		UDP,
 		UnixDomain,
 		File,
-		Pipe
+		Pipe,
+		WebSocket
 	};
 }
 
@@ -35,6 +36,8 @@ inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol
 			return stream << "File";
 		case TYPE::Pipe:
 			return stream << "Pipe";
+		case TYPE::WebSocket:
+			return stream << "WebSocket";
 		default:
 			DCORE_ASSERT(!"Invalid protocol type ");
 			return stream << "Invalid(" << static_cast<uint32_t>(type) << ")";

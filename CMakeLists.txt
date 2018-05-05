@@ -12,16 +12,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE YES)
 if (NOT HUNTER_WIKI)
 	include(cmake/HunterGate.cmake)
 	HunterGate(
-		URL "https://github.com/ruslo/hunter/archive/v0.19.238.tar.gz"
-		SHA1 "9e103596184adb7206430047375a07eb1fa6a9b4"
-	FILEPATH cmake/HunterConfig.cmake
+		URL "https://github.com/ruslo/hunter/archive/v0.20.39.tar.gz"
+		SHA1 "b49c4b58e17c1473e822f8b21fcde92fee25791d"
 	)
 endif()
 
 # Declare our project and version
 project(DictosNet VERSION 0.1 LANGUAGES C CXX)
 
-# boost filesystem
+# boost stuff
 hunter_add_package(Boost COMPONENTS fiber context system)
 
 find_package(Boost CONFIG REQUIRED fiber context system)

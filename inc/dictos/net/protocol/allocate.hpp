@@ -10,6 +10,9 @@ inline std::unique_ptr<class AbstractProtocol> allocateProtocol(Address addr, co
 		case TYPE::TCPv6:
 			return std::make_unique<Tcp>(std::move(addr), std::forward<config::Context &>(context), std::move(ecb));
 
+		case TYPE::WebSocket:
+			return std::make_unique<WebSocket>(std::move(addr), std::forward<config::Context &>(context), std::move(ecb));
+
 		default:
 			DCORE_THROW(InvalidArgument, "Protocol:", addr.protocol(), "is not currently supported (when constructing from address:", addr, ")");
 	}
