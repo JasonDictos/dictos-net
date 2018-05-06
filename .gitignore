@@ -24,3 +24,4 @@ tests/NetTest_CXX_cotire.cmake
 tests/cotire/
 tests/NetTest
 *_cotire.cmake
+*.sln
