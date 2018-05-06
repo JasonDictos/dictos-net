@@ -38,7 +38,7 @@ public:
 	virtual void connect(ConnectCallback cb) = 0;
 
 	// Close
-	virtual void close() = 0;
+	virtual void close() noexcept = 0;
 
 	// I/O
 	virtual void read(Size size, ReadCallback cb) const = 0;

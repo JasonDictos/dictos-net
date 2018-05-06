@@ -19,7 +19,7 @@ public:
 	{
 	}
 
-	void close() override
+	void close() noexcept override
 	{
 		// @@ TODO
 	}

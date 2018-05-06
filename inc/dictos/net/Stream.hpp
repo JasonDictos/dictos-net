@@ -141,7 +141,7 @@ public:
 		}
 		catch (std::exception &e)
 		{
-			DCORE_ERR_THROW(net::error::NetException, "Failed to close:", e);
+			DCORE_ERR_THROW(net::error::NetException, "Failed to close:", e.what());
 		}
 	}
 

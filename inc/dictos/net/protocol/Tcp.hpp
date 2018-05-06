@@ -17,7 +17,7 @@ public:
 	{
 	}
 
-	void close() override
+	void close() noexcept override
 	{
 		m_socket.close();
 	}

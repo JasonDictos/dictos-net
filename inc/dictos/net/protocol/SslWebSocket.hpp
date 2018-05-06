@@ -20,9 +20,9 @@ public:
 	{
 	}
 
-	void close() override
+	void close() noexcept override
 	{
-		m_webSocket.close(websocket::close_code::normal);
+		dictos::error::block([this]{ m_webSocket.close(websocket::close_code::normal); });
 	}
 
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
@@ -62,23 +62,17 @@ public:
 
 	void read(Size size, ReadCallback cb) const override
 	{
-		// Allocate the buffer to read into for the caller
-		memory::Heap result(size);
-
-		// Construct an asio buffer before we move the result into the closure, due to
-		// parameter initialization order this prevents a crash since result will
-		// get moved before it gets passed into the async_read call.
-		boost::asio::mutable_buffer buf(result.cast<void *>(), result.size());
-
 		// Submit the read to the service and bootstrap the callbacks
-		boost::asio::async_read(m_webSocket.next_layer(), buf,
-			[this,result = std::move(result), cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead)
+		m_webSocket.async_read(
+			m_buffer,
+			[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead)
 			{
+				boost::ignore_unused(sizeRead);
+
 				if (errorCheck<OP::Read>(ec))
 					return;
 
-				DCORE_ASSERT(sizeRead == result.size());
-				cb(result);
+				//cb(m_buffer.data());
 			}
 		);
 	}
@@ -136,6 +130,8 @@ public:
 	// We lazily instantiate these as the class is used as a server or a resolving connector
 	std::unique_ptr<tcp::acceptor> m_acceptor;
 	std::unique_ptr<tcp::resolver> m_resolver;
+
+	mutable boost::beast::multi_buffer m_buffer;
 
 	mutable tcp::socket m_socket;
 	mutable websocket::stream<ssl::stream<tcp::socket&>> m_webSocket;

@@ -17,7 +17,7 @@ public:
 		// @@ TODO
 	}
 
-	void close() override
+	void close() noexcept override
 	{
 		//m_socket.close(websocket::close_code::normal);
 	}
