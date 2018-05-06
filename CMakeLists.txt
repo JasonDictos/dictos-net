@@ -21,9 +21,9 @@ endif()
 project(DictosNet VERSION 0.1 LANGUAGES C CXX)
 
 # boost stuff
-hunter_add_package(Boost COMPONENTS fiber context system)
+hunter_add_package(Boost COMPONENTS context system)
 
-find_package(Boost CONFIG REQUIRED fiber context system)
+find_package(Boost CONFIG REQUIRED context system)
 
 # nholmann json
 hunter_add_package(nlohmann_json)
