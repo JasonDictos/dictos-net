@@ -24,6 +24,7 @@ public:
 		auto _param = j.find("params");
 		auto _error = j.find("error");
 		auto _method = j.find("method");
+		auto _result = j.find("result");
 		auto _id = j.find("id");
 
 		if (_param != j.end())
@@ -34,6 +35,8 @@ public:
 			m_method = std::move(_method->get<std::string>());
 		if (_id != j.end())
 			m_id = Uuid::__fromString(_id->get<std::string>());	 // @@ TODO figure out the custom json overloads
+		if (_result != j.end())
+			m_result = std::move(*_result);
 	}
 
 	Command(std::string_view method, json params) :
