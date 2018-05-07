@@ -15,14 +15,20 @@ public:
 	SslWebSocket(Address addr, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
 		AbstractProtocol(std::move(addr), config, std::move(ecb)),
 		m_socket(m_service),
-		m_webSocket(m_socket, sslContext),
 		m_sslContext(std::move(sslContext))
 	{
+		m_webSocket = std::make_unique<websocket::stream<ssl::stream<tcp::socket&>>>(m_socket, m_sslContext);
+		m_webSocket->next_layer().set_verify_callback(boost::bind(&SslWebSocket::onVeirfyCertificate, this, _1, _2));
+	}
+
+	bool onVeirfyCertificate(bool preverified, boost::asio::ssl::verify_context &ctx)
+	{
+		return true;
 	}
 
 	void close() noexcept override
 	{
-		dictos::error::block([this]{ m_webSocket.close(websocket::close_code::normal); });
+		dictos::error::block([this]{ m_webSocket->close(websocket::close_code::normal); });
 	}
 
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
@@ -40,15 +46,13 @@ public:
 		// Now issue the accept and bind the lambda to the new protocol
 		m_acceptor->async_accept(
 			staticUPtrCast<SslWebSocket>(newProtocol)->m_socket.lowest_layer(),
-			[this,cb = std::move(cb),&newProtocol](boost::system::error_code ec) mutable
-			{
+			[this,cb = std::move(cb),&newProtocol](boost::system::error_code ec) mutable {
 				if (errorCheck<OP::Accept>(ec))
 					return;
 
 				// Successfully connected, do handshake
-				staticUPtrCast<SslWebSocket>(newProtocol)->m_webSocket.next_layer().async_handshake(ssl::stream_base::server,
-					[this,cb = std::move(cb)](boost::system::error_code ec)
-					{
+				staticUPtrCast<SslWebSocket>(newProtocol)->m_webSocket->next_layer().async_handshake(ssl::stream_base::server,
+					[this,cb = std::move(cb)](boost::system::error_code ec) {
 						if (errorCheck<OP::SslHandshake>(ec))
 							return;
 
@@ -63,16 +67,18 @@ public:
 	void read(Size size, ReadCallback cb) const override
 	{
 		// Submit the read to the service and bootstrap the callbacks
-		m_webSocket.async_read(
+		m_webSocket->async_read(
 			m_buffer,
-			[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead)
-			{
+			[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
 				boost::ignore_unused(sizeRead);
 
 				if (errorCheck<OP::Read>(ec))
 					return;
 
-				//cb(m_buffer.data());
+				auto data = m_buffer.data();
+				auto begin = boost::asio::buffers_begin(data);
+				auto end = boost::asio::buffers_end(data);
+				cb(memory::Heap(begin, end));
 			}
 		);
 	}
@@ -82,26 +88,24 @@ public:
 		// First we go through a few hoops to resolve the address
 		m_resolver = std::make_unique<tcp::resolver>(m_service);
 		m_resolver->async_resolve(tcp::v4(), m_localAddress.ip(), string::toString(m_localAddress.port()),
-			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results)
-			{
+			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results) {
 				if (errorCheck<OP::Resolve>(ec))
 					return;
 
 				// Ok connect for each resolved entry, first one that connects ok will stop the enum
-				boost::asio::async_connect(m_webSocket.next_layer().next_layer(), results,
-					[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator _iter)
-					{
+				boost::asio::async_connect(m_webSocket->next_layer().next_layer(), results,
+					[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator _iter) {
 						if (errorCheck<OP::Accept>(ec))
 							return;
 
-						// Successfully connected, do handshake
-						m_webSocket.next_layer().async_handshake(ssl::stream_base::client,
-							[this,cb = std::move(cb)](boost::system::error_code ec)
-							{
+						// Successfully connected, do ssl handshake
+						m_webSocket->next_layer().async_handshake(ssl::stream_base::client,
+							[this,cb = std::move(cb)](boost::system::error_code ec) {
 								if (errorCheck<OP::SslHandshake>(ec))
 									return;
 
-								// Phew finally, call the callers cb
+								// One more handshake, the websocket one
+								m_webSocket->handshake(m_localAddress.ip(), "/");
 								cb();
 							}
 						);
@@ -115,14 +119,13 @@ public:
 	{
 		// Submit the write to the service and bootstrap the callbacks
 		boost::asio::mutable_buffer buf(payload.cast<void *>(), payload.size());
-		boost::asio::async_write(m_webSocket.next_layer(), buf,
-			[this,payload = std::move(payload), cb = std::move(cb)](boost::system::error_code ec, size_t sizeWritten)
-			{
+		m_webSocket->async_write(buf,
+			[this,payload = std::move(payload), cb = std::move(cb)](boost::system::error_code ec, size_t sizeWritten) {
 				if (errorCheck<OP::Write>(ec))
 					return;
 
 				DCORE_ASSERT(sizeWritten == payload.size());
-				cb();
+				if (cb) cb();
 			}
 		);
 	}
@@ -134,7 +137,7 @@ public:
 	mutable boost::beast::multi_buffer m_buffer;
 
 	mutable tcp::socket m_socket;
-	mutable websocket::stream<ssl::stream<tcp::socket&>> m_webSocket;
+	mutable std::unique_ptr<websocket::stream<ssl::stream<tcp::socket&>>> m_webSocket;
 	SslContext m_sslContext;
 };
 

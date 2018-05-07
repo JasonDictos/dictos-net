@@ -54,7 +54,7 @@ inline unsigned short Address::port() const
 
 inline std::string Address::ip() const
 {
-	if (m_protocol != PROTOCOL_TYPE::Tcp && m_protocol != PROTOCOL_TYPE::Tcp)
+	if (m_protocol != PROTOCOL_TYPE::Tcp && m_protocol != PROTOCOL_TYPE::WebSocket && m_protocol != PROTOCOL_TYPE::Ssl && m_protocol != PROTOCOL_TYPE::SslWebSocket)
 		DCORE_THROW(RuntimeError, "Address type does not support an ip");
 	return m_address.to_string();
 }

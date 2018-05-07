@@ -14,6 +14,28 @@ class Command
 public:
 	Command() = default;
 
+	Command(memory::Heap data) :
+		Command(json::parse(data.begin(), data.end()))
+	{
+	}
+
+	Command(json j)
+	{
+		auto _param = j.find("params");
+		auto _error = j.find("error");
+		auto _method = j.find("method");
+		auto _id = j.find("id");
+
+		if (_param != j.end())
+			m_params = std::move(*_param);
+		if (_error != j.end())
+			m_error = std::move(*_error);
+		if (_method != j.end())
+			m_method = std::move(_method->get<std::string>());
+		if (_id != j.end())
+			m_id = Uuid::__fromString(_id->get<std::string>());	 // @@ TODO figure out the custom json overloads
+	}
+
 	Command(std::string_view method, json params) :
 		m_method(method.begin(), method.end()),
 		m_params(std::move(params))
@@ -74,12 +96,24 @@ public:
 	const Uuid &id() const { return m_id; }
 	Uuid &id() { return m_id; }
 
+	void checkError()
+	{
+		if (error().size() != 0) {
+			DCORE_THROW(RuntimeError, error().dump());
+		}
+	}
+
 	enum class TYPE {
 		Init,
 		Request,
 		Result,
 		Error
 	};
+
+	std::string __toString() const
+	{
+		return json(*this).dump();
+	}
 
 	TYPE type() const
 	{
@@ -105,32 +139,26 @@ protected:
 	const std::string m_jsonRpcVersion = "2.0";
 };
 
-}
-
-namespace ns {
-
-using nlohmann::json;
-using namespace dictos;
 
 // Conversion hooks for Command to json/from json
-inline void to_json(json& j, const net::Command& cmd)
+inline void to_json(json& j, const Command& cmd)
 {
 	switch (cmd.type()) {
-		case net::Command::TYPE::Request:
-			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"method", cmd.method()}, {"params", cmd.params()}};
+		case Command::TYPE::Request:
+			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"method", cmd.method()}, {"params", cmd.params()}};
 			break;
-		case net::Command::TYPE::Result:
-			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"result", cmd.result()}};
+		case Command::TYPE::Result:
+			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"result", cmd.result()}};
 			break;
-		case net::Command::TYPE::Error:
-			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"error", cmd.result()}};
+		case Command::TYPE::Error:
+			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"error", cmd.result()}};
 			break;
 		default:
 			DCORE_THROW(RuntimeError, "Cannot convert an un-setup command to json");
 	}
 }
 
-inline void from_json(const json& j, net::Command& cmd)
+inline void from_json(const json& j, Command& cmd)
 {
 	if (j.find("method") != j.end()) {
 		cmd.params() = j.at("params").get<json>();

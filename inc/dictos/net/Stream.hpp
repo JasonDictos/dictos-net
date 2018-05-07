@@ -43,8 +43,7 @@ public:
 
 	void accept(AcceptCallback cb)
 	{
-		try
-		{
+		try {
 			LOGT(stream, "Accepting new connections");
 
 			// Create a new blank stream from our target address and options
@@ -55,126 +54,101 @@ public:
 			// ptr so it can set it up for us
 			m_protocol->accept(
 				protocol,
-				[this,bookmark = getStreamPtr(),cb = std::move(cb),newStream = std::move(newStream)]()
-				{
+				[this,bookmark = getStreamPtr(),cb = std::move(cb),newStream = std::move(newStream)]() {
 					// Great we successfully accepted a new connection
 					LOGT(stream, "Successfully accepted new connection from:", newStream->getRemoteAddress());
 					cb(std::move(newStream));
 				}
 			);
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to accept:", e.what());
 		}
 	}
 
 	void read(Size size, ReadCallback cb) const
 	{
-		try
-		{
+		try {
 			LOGT(stream, "Reading:", size);
 
 			m_protocol->read(size, std::move(cb));
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to read:", e);
 		}
 	}
 
 	void connect(ConnectCallback cb)
 	{
-		try
-		{
+		try {
 			LOGT(stream, "Connecting");
 
 			m_protocol->connect(std::move(cb));
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to connect:", e);
 		}
 	}
 
 	void write(memory::Heap payload, WriteCallback cb = WriteCallback())
 	{
-		try
-		{
+		try {
 			LOGT(stream, "Writing:", payload.size());
 
 			m_protocol->write(std::move(payload), std::move(cb));
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to write:", e);
 		}
 	}
 
 	void close()
 	{
-		try
-		{
+		try {
 			LOGT(stream, "Closing");
 
 			m_protocol->close();
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to close:", e.what());
 		}
 	}
 
 	Address getLocalAddress() const
 	{
-		try
-		{
+		try {
 			return m_protocol->getLocalAddress();
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to get local address:", e);
 		}
 	}
 
 	Address getRemoteAddress() const
 	{
-		try
-		{
+		try {
 			return m_protocol->getRemoteAddress();
-		}
-		catch (dictos::error::Exception &e)
-		{
+		} catch (dictos::error::Exception &e) {
 			throw;
-		}
-		catch (std::exception &e)
-		{
+		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to get remote address:", e);
 		}
+	}
+
+	/**
+	 * Will re-throw any previously caught exception.
+	 */
+	void checkLastError() const
+	{
+		auto guard = m_lock.lock();
+		if (m_lastError)
+			std::rethrow_exception(m_lastError);
 	}
 
 	// Error handling is centralized to this public signal for
@@ -190,6 +164,10 @@ protected:
 	 */
 	void onError(const dictos::error::Exception &e, OP operation)
 	{
+		auto guard = m_lock.lock();
+		m_lastError = std::make_exception_ptr(e);
+		guard.release();
+
 		// Pass it along and grab a strong ref to ourselves along the way
 		LOGT(net, "Protocol reported error:", e, "For operation:", operation);
 		ErrorSig(e, operation, shared_from_this());
@@ -210,6 +188,9 @@ protected:
 
 		return section;
 	}
+
+	mutable async::SpinLock m_lock;
+	std::exception_ptr m_lastError;
 
 	protocol::ProtocolUPtr m_protocol;
 };

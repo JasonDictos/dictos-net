@@ -9,7 +9,6 @@ public:
 
 	virtual ~Context()
 	{
-		LOGT(net, "Context shutting down");
 		m_asioContext.stop();
 	}
 

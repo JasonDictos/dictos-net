@@ -10,6 +10,7 @@ namespace dictos::net {
 		Write,
 		Resolve,
 		SslHandshake,
+		WebsocketHandshake,
 	};
 
 }
@@ -29,6 +30,10 @@ inline std::ostream & operator << (std::ostream &stream, ::dictos::net::OP opera
 			return stream << "Write";
 		case ::dictos::net::OP::Resolve:
 			return stream << "Resolve";
+		case ::dictos::net::OP::SslHandshake:
+			return stream << "SslHandshake";
+		case ::dictos::net::OP::WebsocketHandshake:
+			return stream << "WebsocketHandshake";
 		default:
 			DCORE_ASSERT(!"Invalid operation code");
 			return stream << "Invalid(" << static_cast<uint32_t>(operation) << ")";
