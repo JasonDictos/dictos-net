@@ -61,9 +61,10 @@ public:
 				}
 			);
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
-			DCORE_ERR_THROW(net::error::NetException, "Failed to accept:", e.what());
+			DCORE_ERR_THROW(net::error::NetException, "Failed to accept:", e);
 		}
 	}
 
@@ -74,6 +75,7 @@ public:
 
 			m_protocol->read(size, std::move(cb));
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to read:", e);
@@ -87,6 +89,7 @@ public:
 
 			m_protocol->connect(std::move(cb));
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to connect:", e);
@@ -100,6 +103,7 @@ public:
 
 			m_protocol->write(std::move(payload), std::move(cb));
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to write:", e);
@@ -113,6 +117,7 @@ public:
 
 			m_protocol->close();
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to close:", e.what());
@@ -124,6 +129,7 @@ public:
 		try {
 			return m_protocol->getLocalAddress();
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to get local address:", e);
@@ -135,6 +141,7 @@ public:
 		try {
 			return m_protocol->getRemoteAddress();
 		} catch (dictos::error::Exception &e) {
+			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
 		} catch (std::exception &e) {
 			DCORE_ERR_THROW(net::error::NetException, "Failed to get remote address:", e);
