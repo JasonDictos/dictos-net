@@ -11,9 +11,14 @@ using tcp = boost::asio::ip::tcp;
 class Tcp : public AbstractProtocol
 {
 public:
+	Tcp(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb) :
+		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
+		m_socket(em)
+	{
+	}
+
 	Tcp(Address addr, config::Context &config, ErrorCallback ecb) :
-		AbstractProtocol(std::move(addr), config, std::move(ecb)),
-		m_socket(GlobalContext())
+		Tcp(std::move(addr), GlobalEventMachine(), config, std::move(ecb))
 	{
 	}
 
@@ -25,7 +30,7 @@ public:
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
 	{
 		m_acceptor = std::make_unique<tcp::acceptor>(
-			GlobalContext(),
+			m_em,
 			tcp::endpoint(
 				Address::IpAddress::from_string(
 					m_localAddress.ip()
@@ -75,7 +80,7 @@ public:
 	void connect(ConnectCallback cb) override
 	{
 		// First we go through a few hoops to resolve the address
-		m_resolver = std::make_unique<tcp::resolver>(m_service);
+		m_resolver = std::make_unique<tcp::resolver>(m_em);
 		m_resolver->async_resolve(tcp::v4(), m_localAddress.ip(), string::toString(m_localAddress.port()),
 			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results)
 			{

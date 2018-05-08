@@ -24,10 +24,15 @@ public:
 	typedef std::function<void()> WriteCallback;
 	typedef std::function<void(const dictos::error::Exception &, OP)> ErrorCallback;
 
-	Stream(Address addr, config::Options options = config::Options()) :
+	Stream(Address addr, EventMachine &em, config::Options options = config::Options()) :
 		Context(getSection(), std::move(options)),
 		m_protocol(protocol::allocateProtocol(std::move(addr), *this,
-			std::bind(&Stream::onError, this, std::placeholders::_1, std::placeholders::_2)))
+			std::bind(&Stream::onError, this, std::placeholders::_1, std::placeholders::_2), em))
+	{
+	}
+
+	Stream(Address addr, config::Options options = config::Options()) :
+		Stream(std::move(addr), GlobalEventMachine(), std::move(options))
 	{
 	}
 
@@ -157,6 +162,8 @@ public:
 		if (m_lastError)
 			std::rethrow_exception(m_lastError);
 	}
+
+	EventMachine &eventMachine() { return m_protocol->eventMachine(); }
 
 	// Error handling is centralized to this public signal for
 	// clients to handle errors centrally as well

@@ -10,9 +10,15 @@ namespace ssl = boost::asio::ssl;
 class Ssl : public AbstractProtocol
 {
 public:
+	Ssl(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
+		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
+		m_socket(m_em, sslContext), m_sslContext(std::move(sslContext))
+	{
+		// @@ TODO
+	}
+
 	Ssl(Address addr, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
-		AbstractProtocol(std::move(addr), config, std::move(ecb)),
-		m_socket(GlobalContext(), sslContext), m_sslContext(std::move(sslContext))
+		Ssl(std::move(addr), GlobalEventMachine(), config, std::move(ecb), std::move(sslContext))
 	{
 		// @@ TODO
 	}
@@ -25,7 +31,7 @@ public:
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
 	{
 		m_acceptor = std::make_unique<tcp::acceptor>(
-			GlobalContext(),
+			m_em,
 			tcp::endpoint(
 				Address::IpAddress::from_string(
 					m_localAddress.ip()
@@ -83,7 +89,7 @@ public:
 	void connect(ConnectCallback cb) override
 	{
 		// First we go through a few hoops to resolve the address
-		m_resolver = std::make_unique<tcp::resolver>(m_service);
+		m_resolver = std::make_unique<tcp::resolver>(m_em);
 		m_resolver->async_resolve(tcp::v4(), m_localAddress.ip(), string::toString(m_localAddress.port()),
 			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results)
 			{

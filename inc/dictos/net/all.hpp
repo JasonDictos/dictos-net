@@ -11,7 +11,7 @@ namespace dictos::net {
 #include <dictos/net/json.hpp>
 #include <dictos/net/uuid_json.hpp>
 #include <dictos/net/Command.hpp>
-#include <dictos/net/Context.hpp>
+#include <dictos/net/EventMachine.hpp>
 #include <dictos/net/api.hpp>
 #include <dictos/net/streamptr.hpp>
 #include <dictos/net/error/all.hpp>

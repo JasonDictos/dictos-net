@@ -12,13 +12,18 @@ namespace ssl = boost::asio::ssl;
 class SslWebSocket : public AbstractProtocol
 {
 public:
-	SslWebSocket(Address addr, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
-		AbstractProtocol(std::move(addr), config, std::move(ecb)),
-		m_socket(m_service),
+	SslWebSocket(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
+		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
+		m_socket(m_em),
 		m_sslContext(std::move(sslContext))
 	{
 		m_webSocket = std::make_unique<websocket::stream<ssl::stream<tcp::socket&>>>(m_socket, m_sslContext);
 		m_webSocket->next_layer().set_verify_callback(boost::bind(&SslWebSocket::onVeirfyCertificate, this, _1, _2));
+	}
+
+	SslWebSocket(Address addr, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
+		SslWebSocket(std::move(addr), GlobalEventMachine(), config, std::move(ecb), std::move(sslContext))
+	{
 	}
 
 	bool onVeirfyCertificate(bool preverified, boost::asio::ssl::verify_context &ctx)
@@ -34,7 +39,7 @@ public:
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
 	{
 		m_acceptor = std::make_unique<tcp::acceptor>(
-			GlobalContext(),
+			m_em,
 			tcp::endpoint(
 				Address::IpAddress::from_string(
 					m_localAddress.ip()
@@ -86,7 +91,7 @@ public:
 	void connect(ConnectCallback cb) override
 	{
 		// First we go through a few hoops to resolve the address
-		m_resolver = std::make_unique<tcp::resolver>(m_service);
+		m_resolver = std::make_unique<tcp::resolver>(m_em);
 		m_resolver->async_resolve(tcp::v4(), m_localAddress.ip(), string::toString(m_localAddress.port()),
 			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results) {
 				if (errorCheck<OP::Resolve>(ec))

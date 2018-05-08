@@ -2,7 +2,7 @@
 
 namespace dictos::net::protocol {
 
-inline std::unique_ptr<class AbstractProtocol> allocateProtocol(Address addr, config::Context &context, AbstractProtocol::ErrorCallback ecb)
+inline std::unique_ptr<class AbstractProtocol> allocateProtocol(Address addr, config::Context &context, AbstractProtocol::ErrorCallback ecb, EventMachine &em)
 {
 	switch (addr.protocol())
 	{
@@ -21,6 +21,11 @@ inline std::unique_ptr<class AbstractProtocol> allocateProtocol(Address addr, co
 		default:
 			DCORE_THROW(InvalidArgument, "Protocol:", addr.protocol(), "is not currently supported (when constructing from address:", addr, ")");
 	}
+}
+
+inline std::unique_ptr<class AbstractProtocol> allocateProtocol(Address addr, config::Context &context, AbstractProtocol::ErrorCallback ecb)
+{
+	return allocateProtocol(std::move(addr), context, std::move(ecb), GlobalEventMachine());
 }
 
 }

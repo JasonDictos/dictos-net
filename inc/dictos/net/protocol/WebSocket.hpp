@@ -13,9 +13,14 @@ namespace websocket = boost::beast::websocket;
 class WebSocket : public AbstractProtocol
 {
 public:
+	WebSocket(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb) :
+		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
+		m_socket(em)
+	{
+	}
+
 	WebSocket(Address addr, config::Context &config, ErrorCallback ecb) :
-		AbstractProtocol(std::move(addr), config, std::move(ecb)),
-		m_socket(GlobalContext())
+		WebSocket(std::move(addr), GlobalEventMachine(), config, std::move(ecb))
 	{
 	}
 

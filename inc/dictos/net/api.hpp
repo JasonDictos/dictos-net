@@ -2,15 +2,15 @@
 
 namespace dictos::net {
 
-inline auto & GlobalContext()
+inline auto & GlobalEventMachine()
 {
-	static Context context;
-	return context;
+	static EventMachine em;
+	return em;
 }
 
 inline void dispatch()
 {
-	GlobalContext().runOne();
+	GlobalEventMachine().runOne();
 }
 
 }

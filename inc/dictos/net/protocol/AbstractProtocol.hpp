@@ -21,11 +21,11 @@ public:
 	typedef std::function<void()> WriteCallback;
 	typedef std::function<void(const dictos::error::Exception &, OP)> ErrorCallback;
 
-	AbstractProtocol(Address addr, config::Context &config, ErrorCallback ecb) :
+	AbstractProtocol(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb) :
 		m_config(config),
 	   	m_localAddress(std::move(addr)),
 	   	m_ecb(std::move(ecb)),
-	   	m_service(GlobalContext())
+		m_em(em)
 	{
 	}
 
@@ -46,6 +46,8 @@ public:
 
 	Address getLocalAddress() const { return m_localAddress; }
 	Address getRemoteAddress() const { return m_localAddress; }
+
+	EventMachine & eventMachine() { return m_em; }
 
 protected:
 
@@ -79,7 +81,7 @@ protected:
 
 	ErrorCallback m_ecb;
 
-	boost::asio::io_service &m_service;
+	EventMachine &m_em;
 	Address m_localAddress, m_remoteAddress;
 };
 
