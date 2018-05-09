@@ -13,7 +13,7 @@ namespace {
 // Register our listener for logging
 CATCH_REGISTER_LISTENER(CatchListener);
 
-int main (int argc, char * argv[]) 
+int main (int argc, char * argv[])
 {
 	// Redirect std::cout rdbuf to go to our logger
 	s_oldBuffer = std::cout.rdbuf(&s_stream);
@@ -25,5 +25,5 @@ int main (int argc, char * argv[])
 	Catch::Session().run( argc, argv );
 
 	// Stop our global service so we don't crash
-	net::GlobalContext().stop();
+	net::GlobalEventMachine().stop();
 }

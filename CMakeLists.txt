@@ -22,12 +22,14 @@ project(DictosNet VERSION 0.1 LANGUAGES C CXX)
 
 # boost stuff
 hunter_add_package(Boost COMPONENTS context system)
+find_package(Boost CONFIG REQUIRED)
 
-find_package(Boost CONFIG REQUIRED context system)
+# ssl stuff
+hunter_add_package(OpenSSL)
+find_package(OpenSSL REQUIRED)
 
 # nholmann json
 hunter_add_package(nlohmann_json)
-
 find_package(nlohmann_json CONFIG REQUIRED)
 
 # Our core file list
@@ -48,12 +50,14 @@ add_library(
 target_compile_features(DictosNet INTERFACE cxx_std_17)
 
 # Enable extended stacktrace info for boost, requires libdl
-target_compile_definitions(DictosNet INTERFACE -DBOOST_STACKTRACE_USE_BACKTRACE)
+target_compile_definitions(DictosNet INTERFACE -DBOOST_STACKTRACE_USE_BACKTRACE -D_REENTRANT)
 
 # Require clang libs
 target_link_libraries(DictosNet INTERFACE
 	DictosCore
 	nlohmann_json
+	OpenSSL::Crypto
+	OpenSSL::SSL
 )
 
 # Define headers for this library. PUBLIC headers are used for

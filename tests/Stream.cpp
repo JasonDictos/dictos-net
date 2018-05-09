@@ -63,7 +63,7 @@ TEST_CASE("Stream::Basic")
 		[&failed](const dictos::error::Exception &e, net::OP op, StreamPtr stream)
 		{
 			LOG(test, "Server - Error sig called:", e, '\n', e.traceString());
-			net::GlobalContext().stop();
+			net::GlobalEventMachine().stop();
 			failed = true;
 		}
 	);
@@ -71,11 +71,11 @@ TEST_CASE("Stream::Basic")
 		[&failed](const dictos::error::Exception &e, net::OP op, StreamPtr stream)
 		{
 			LOG(test, "Client - Error sig called:", e, '\n', e.traceString());
-			net::GlobalContext().stop();
+			net::GlobalEventMachine().stop();
 			failed = true;
 		}
 	);
 
-	net::GlobalContext().run();
+	net::GlobalEventMachine().run();
 	REQUIRE(failed == false);
 }

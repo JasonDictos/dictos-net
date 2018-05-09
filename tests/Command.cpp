@@ -11,16 +11,16 @@ TEST_CASE("Command::Basic")
 {
 	Command request("hello");
 
-	REQUIRE(request.getMethod() == "hello");
+	REQUIRE(request.method() == "hello");
 
-	request["param1"] = 1.5;
+	request.params()["param1"] = 1.5;
 
-	REQUIRE(request["param1"] == 1.5);
+	REQUIRE(request.params()["param1"] == 1.5);
 
 	json j = request;
 
 	Command request2 = j;
 
-	REQUIRE(request2.getMethod() == "hello");
-	REQUIRE(request2["param1"] == 1.5);
+	REQUIRE(request2.method() == "hello");
+	REQUIRE(request2.params()["param1"] == 1.5);
 }
