@@ -71,16 +71,19 @@ public:
 
 	void read(Size size, ReadCallback cb) const override
 	{
+		auto buffer = std::make_shared<boost::beast::multi_buffer>();
+		auto &_buffer = *buffer;
+
 		// Submit the read to the service and bootstrap the callbacks
 		m_webSocket->async_read(
-			m_buffer,
-			[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
+			_buffer,
+			[this,buffer = std::move(buffer),cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
 				boost::ignore_unused(sizeRead);
 
 				if (errorCheck<OP::Read>(ec))
 					return;
 
-				auto data = m_buffer.data();
+				auto data = buffer->data();
 				auto begin = boost::asio::buffers_begin(data);
 				auto end = boost::asio::buffers_end(data);
 				cb(memory::Heap(begin, end));

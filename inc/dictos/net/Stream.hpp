@@ -167,7 +167,7 @@ public:
 
 	// Error handling is centralized to this public signal for
 	// clients to handle errors centrally as well
-	boost::signals2::signal<
+	signals::signal<
 		void(const dictos::error::Exception &e, OP op, StreamPtr)
 		> ErrorSig;
 

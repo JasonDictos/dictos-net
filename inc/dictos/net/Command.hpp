@@ -72,6 +72,7 @@ public:
 
 		m_method = cmd.m_method;
 		m_params = cmd.m_params;
+		m_result = cmd.m_result;
 		m_id = cmd.m_id;
 		return *this;
 	}
@@ -80,6 +81,7 @@ public:
 	{
 		m_method = std::move(cmd.m_method);
 		m_params = std::move(cmd.m_params);
+		m_result = std::move(cmd.m_result);
 		m_id = std::move(cmd.m_id);
 		return *this;
 	}
@@ -141,7 +143,6 @@ protected:
 	Uuid m_id;
 	const std::string m_jsonRpcVersion = "2.0";
 };
-
 
 // Conversion hooks for Command to json/from json
 inline void to_json(json& j, const Command& cmd)

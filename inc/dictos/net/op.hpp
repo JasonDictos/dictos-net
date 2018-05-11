@@ -11,6 +11,7 @@ namespace dictos::net {
 		Resolve,
 		SslHandshake,
 		WebsocketHandshake,
+		Callback,
 	};
 
 }
