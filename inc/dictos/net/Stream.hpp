@@ -78,7 +78,14 @@ public:
 		try {
 			LOGT(stream, "Reading:", size);
 
-			m_protocol->read(size, std::move(cb));
+			m_protocol->read(size, 
+				[this,stream = getThisPtr(),cb = std::move(cb)](memory::Heap data) {
+
+				// Now that we've received it report our rate
+				RecvRate.report(data.size());
+
+				cb(std::move(data));
+			});
 		} catch (dictos::error::Exception &e) {
 			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
@@ -106,7 +113,20 @@ public:
 		try {
 			LOGT(stream, "Writing:", payload.size());
 
-			m_protocol->write(std::move(payload), std::move(cb));
+			auto size = payload.size();
+
+			m_protocol->write(std::move(payload), 
+				[this,size,stream = getThisPtr(),cb = std::move(cb)]() {
+
+					// Now that we've sent it report it to stats
+					SendRate.report(size);
+
+					// Write callbacks are optional
+					if (cb) {
+						cb();
+					}
+				}
+			);
 		} catch (dictos::error::Exception &e) {
 			LOG(stream, __FUNCTION__, "error re-raise", e);
 			throw;
@@ -171,7 +191,14 @@ public:
 		void(const dictos::error::Exception &e, OP op, StreamPtr)
 		> ErrorSig;
 
+	mutable util::Throughput SendRate;
+	mutable util::Throughput RecvRate;
+
 protected:
+	StreamPtr getThisPtr() const
+	{
+		return const_cast<Stream *>(this)->enable_shared_from_this<Stream>::shared_from_this();
+	}
 
 	/**
 	 * Called by the protocol on an error.

@@ -10,6 +10,7 @@ namespace dictos::net {
 #include "dictos/core/all.hpp"
 #include "dictos/net/json.hpp"
 #include "dictos/net/uuid_json.hpp"
+#include "dictos/net/throughput_json.hpp"
 #include "dictos/net/Command.hpp"
 #include "dictos/net/EventMachine.hpp"
 #include "dictos/net/api.hpp"
