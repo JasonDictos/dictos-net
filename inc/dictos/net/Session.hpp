@@ -105,8 +105,6 @@ protected:
 	{
 		m_readEnqueued.exchange(false);
 
-		LOG(session, "Raw read:", data.cast<char>());
-
 		// Parse the command and figure out what to do with it
 		Command cmd(std::move(data));
 		switch (cmd.type()) {
@@ -166,7 +164,7 @@ protected:
 	 */
 	void onIncomingResult(Command result)
 	{
-		LOG(session, "Received incoming result:", result);
+//		LOG(session, "Received incoming result:", result);
 
 		// We should have something in the outgoing queue matching its id
 		auto guard = m_mutex.lock();

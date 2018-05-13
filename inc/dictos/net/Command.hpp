@@ -147,13 +147,13 @@ inline void to_json(json& j, const Command& cmd)
 {
 	switch (cmd.type()) {
 		case Command::TYPE::Request:
-			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"method", cmd.method()}, {"params", cmd.params()}};
+			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"method", cmd.method()}, {"params", cmd.params()}};
 			break;
 		case Command::TYPE::Result:
-			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"result", cmd.result()}};
+			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"result", cmd.result()}};
 			break;
 		case Command::TYPE::Error:
-			j = json{{"jsonrpc", "2.0"}, {"id", string::toString(cmd.id())}, {"error", cmd.result()}};
+			j = json{{"jsonrpc", "2.0"}, {"id", cmd.id()}, {"error", cmd.result()}};
 			break;
 		default:
 			DCORE_THROW(RuntimeError, "Cannot convert an un-setup command to json");
@@ -165,13 +165,13 @@ inline void from_json(const json& j, Command& cmd)
 	if (j.find("method") != j.end()) {
 		cmd.params() = j.at("params").get<json>();
 		cmd.method() = j.at("method").get<std::string>(),
-		cmd.id() = Uuid::__fromString(j.at("id").get<std::string>());
+		cmd.id() = j.at("id").get<Uuid>();
 	} else if (j.find("result") != j.end()) {
 		cmd.result() = j.at("params").get<json>();
-		cmd.id() = Uuid::__fromString(j.at("id").get<std::string>());
+		cmd.id() = j.at("id").get<Uuid>();
 	} else if (j.find("error") != j.end()) {
 		cmd.error() = j.at("error").get<json>();
-		cmd.id() = Uuid::__fromString(j.at("id").get<std::string>());
+		cmd.id() = j.at("id").get<Uuid>();
 	} else {
 		DCORE_THROW(RuntimeError, "Invalid json payload");
 	}

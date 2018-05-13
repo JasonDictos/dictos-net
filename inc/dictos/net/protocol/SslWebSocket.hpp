@@ -83,11 +83,11 @@ public:
 					if (errorCheck<OP::Read>(ec))
 						return;
 
-					auto data = m_buffer.data();
-					auto begin = boost::asio::buffers_begin(data);
-					auto end = boost::asio::buffers_end(data);
-					cb(memory::Heap(begin, end));
-					m_buffer.consume(m_buffer.size());
+					boost::asio::const_buffer const_buff = boost::beast::buffers_front(m_buffer.data());
+					auto chr = boost::asio::buffer_cast<const std::byte *>(const_buff);
+					auto view = memory::HeapView(chr, const_buff.size());
+					m_buffer.consume(const_buff.size());
+					cb(view);
 				}
 			)
 		);
@@ -150,7 +150,7 @@ public:
 	std::unique_ptr<tcp::acceptor> m_acceptor;
 	std::unique_ptr<tcp::resolver> m_resolver;
 
-	mutable boost::beast::multi_buffer m_buffer;
+	mutable boost::beast::flat_buffer m_buffer;
 
 	mutable tcp::socket m_socket;
 	mutable std::unique_ptr<websocket::stream<ssl::stream<tcp::socket&>>> m_webSocket;
