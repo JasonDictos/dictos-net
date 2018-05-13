@@ -32,22 +32,22 @@ public:
 	virtual ~AbstractProtocol() = default;
 
 	// Server accept/listen/bind
-	virtual void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) = 0;
+	virtual void accept(ProtocolUPtr &newProtocol, const AcceptCallback &cb) = 0;
 
 	// Client connect
-	virtual void connect(ConnectCallback cb) = 0;
+	virtual void connect(const ConnectCallback &cb) = 0;
 
 	// Close
 	virtual void close() noexcept = 0;
 
 	// I/O
-	virtual void read(Size size, ReadCallback cb) const = 0;
-	virtual void write(memory::Heap payload, WriteCallback cb) = 0;
+	virtual void read(Size size, const ReadCallback &cb) const = 0;
+	virtual void write(memory::Heap payload, const WriteCallback &cb) = 0;
 
 	Address getLocalAddress() const { return m_localAddress; }
 	Address getRemoteAddress() const { return m_localAddress; }
 
-	EventMachine & eventMachine() { return m_em; } 
+	EventMachine & eventMachine() { return m_em; }
 protected:
 
 	/**

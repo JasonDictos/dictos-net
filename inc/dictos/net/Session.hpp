@@ -35,14 +35,24 @@ public:
 	 */
 	struct RequestCtx
 	{
+		RequestCtx(Command _request, const ReplyHandler &_replyHandler) :
+				request(std::move(_request)), replyHandler(_replyHandler)
+		{
+		}
+
+		RequestCtx(RequestCtx &&ctx) :
+				request(std::move(ctx.request)), replyHandler(ctx.replyHandler)
+		{
+		}
+
 		Command request;
-		ReplyHandler replyHandler;
+		const ReplyHandler &replyHandler;
 	};
 
 	/**
 	 * Submits the payload to the stream for async sending.
 	 */
-	void submitRequest(Command cmd, ReplyHandler replyHandler)
+	void submitRequest(Command cmd, const ReplyHandler &replyHandler)
 	{
 		// Has to be a request
 		if (cmd.type() != Command::TYPE::Request) {
@@ -63,14 +73,11 @@ public:
 			DCORE_THROW(RuntimeError, "Duplicate outgoing request id detected:", cmd);
 		}
 
-		guard.release();
-
 		// Add a request context for this request id
 		auto id = cmd.id();
 		auto json = cmd.__toString();
 
-		guard.lock();
-		m_outgoing[id] = RequestCtx( {std::move(cmd), std::move(replyHandler) });
+		m_outgoing.insert(iter, std::make_pair(std::move(id), RequestCtx(std::move(cmd), replyHandler)));
 		guard.unlock();
 
 		// Submit it over the wire

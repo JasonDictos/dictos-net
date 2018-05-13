@@ -34,19 +34,15 @@ public:
 		if (_method != j.end())
 			m_method = std::move(_method->get<std::string>());
 		if (_id != j.end())
-			m_id = _id->get<Uuid>();	 
+			m_id = _id->get<Uuid>();
 		if (_result != j.end())
 			m_result = std::move(*_result);
-
-		// If we've constructed as a request with no id, generate one here implicitly
-		if (!m_id && type() == TYPE::Request) {
-			m_id = Uuid::create();
-		}
 	}
 
 	Command(std::string_view method, json params) :
 		m_method(method.begin(), method.end()),
-		m_params(std::move(params))
+		m_params(std::move(params)),
+		m_id(Uuid::create())
 	{
 	}
 
