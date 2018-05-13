@@ -20,6 +20,11 @@ public:
 		}
 	}
 
+	EventMachine(const EventMachine &em) = delete;
+	EventMachine(EventMachine &&em) = delete;
+	EventMachine & operator = (EventMachine &&em) = delete;
+	EventMachine & operator = (const EventMachine &em) = delete;
+
 	virtual ~EventMachine()
 	{
 		for(auto &thread : m_threads) {

@@ -16,7 +16,7 @@ public:
 	// Define the well known op callback signatures, they are slightly different then
 	// what the stream wrapper exposes
 	typedef std::function<void()> AcceptCallback;
-	typedef std::function<void(memory::Heap)> ReadCallback;
+	typedef std::function<void(memory::HeapView)> ReadCallback;
 	typedef std::function<void()> ConnectCallback;
 	typedef std::function<void()> WriteCallback;
 	typedef std::function<void(const dictos::error::Exception &, OP)> ErrorCallback;
@@ -47,8 +47,7 @@ public:
 	Address getLocalAddress() const { return m_localAddress; }
 	Address getRemoteAddress() const { return m_localAddress; }
 
-	EventMachine & eventMachine() { return m_em; }
-
+	EventMachine & eventMachine() { return m_em; } 
 protected:
 
 	/**

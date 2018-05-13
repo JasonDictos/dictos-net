@@ -99,7 +99,7 @@ protected:
 	/**
 	 * Called when we receive an incoming payload
 	 */
-	void onIncoming(memory::Heap data)
+	void onIncoming(memory::HeapView data)
 	{
 		m_readEnqueued.exchange(false);
 
@@ -129,7 +129,7 @@ protected:
 	void enqueueRead()
 	{
 		if (m_readEnqueued.exchange(true) == false) {
-			m_stream->read(Size(), [session = getThisPtr()](memory::Heap data) {
+			m_stream->read(Size(), [session = getThisPtr()](memory::HeapView data) {
 				session->onIncoming(std::move(data));
 			});
 		}

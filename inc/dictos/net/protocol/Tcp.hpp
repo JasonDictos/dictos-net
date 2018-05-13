@@ -72,7 +72,7 @@ public:
 					return;
 
 				DCORE_ASSERT(sizeRead == result.size());
-				cb(result);
+				cb(std::move(*const_cast<memory::Heap *>(&result)));
 			}
 		);
 	}

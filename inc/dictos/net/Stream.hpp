@@ -19,10 +19,10 @@ public:
 
 	// Define the well known op callback signatures
 	typedef std::function<void(StreamPtr)> AcceptCallback;
-	typedef std::function<void(memory::Heap)> ReadCallback;
-	typedef std::function<void()> ConnectCallback;
-	typedef std::function<void()> WriteCallback;
-	typedef std::function<void(const dictos::error::Exception &, OP)> ErrorCallback;
+	using ReadCallback = protocol::AbstractProtocol::ReadCallback;
+	using ConnectCallback = protocol::AbstractProtocol::ConnectCallback;
+	using WriteCallback = protocol::AbstractProtocol::WriteCallback;
+	using ErrorCallback = protocol::AbstractProtocol::ErrorCallback;
 
 	Stream(Address addr, EventMachine &em, config::Options options = config::Options()) :
 		Context(getSection(), std::move(options)),
@@ -79,7 +79,7 @@ public:
 			LOGT(stream, "Reading:", size);
 
 			m_protocol->read(size, 
-				[this,stream = getThisPtr(),cb = std::move(cb)](memory::Heap data) {
+				[this,stream = getThisPtr(),cb = std::move(cb)](memory::HeapView data) {
 
 				// Now that we've received it report our rate
 				RecvRate.report(data.size());

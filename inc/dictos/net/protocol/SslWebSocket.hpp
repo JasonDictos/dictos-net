@@ -15,7 +15,8 @@ public:
 	SslWebSocket(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb, SslContext sslContext) :
 		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
 		m_socket(m_em),
-		m_sslContext(std::move(sslContext))
+		m_sslContext(std::move(sslContext)),
+		m_strand(m_socket.get_executor())
 	{
 		m_webSocket = std::make_unique<websocket::stream<ssl::stream<tcp::socket&>>>(m_socket, m_sslContext);
 		m_webSocket->next_layer().set_verify_callback(boost::bind(&SslWebSocket::onVeirfyCertificate, this, _1, _2));
@@ -71,23 +72,24 @@ public:
 
 	void read(Size size, ReadCallback cb) const override
 	{
-		auto buffer = std::make_shared<boost::beast::multi_buffer>();
-		auto &_buffer = *buffer;
-
 		// Submit the read to the service and bootstrap the callbacks
 		m_webSocket->async_read(
-			_buffer,
-			[this,buffer = std::move(buffer),cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
-				boost::ignore_unused(sizeRead);
+			m_buffer,
+			boost::asio::bind_executor(
+				m_strand,
+				[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
+					boost::ignore_unused(sizeRead);
 
-				if (errorCheck<OP::Read>(ec))
-					return;
+					if (errorCheck<OP::Read>(ec))
+						return;
 
-				auto data = buffer->data();
-				auto begin = boost::asio::buffers_begin(data);
-				auto end = boost::asio::buffers_end(data);
-				cb(memory::Heap(begin, end));
-			}
+					auto data = m_buffer.data();
+					auto begin = boost::asio::buffers_begin(data);
+					auto end = boost::asio::buffers_end(data);
+					cb(memory::Heap(begin, end));
+					m_buffer.consume(m_buffer.size());
+				}
+			)
 		);
 	}
 
@@ -123,18 +125,24 @@ public:
 		);
 	}
 
-	void write(memory::Heap payload, WriteCallback cb) override
+	void write(memory::Heap _payload, WriteCallback cb) override
 	{
-		// Submit the write to the service and bootstrap the callbacks
-		boost::asio::mutable_buffer buf(payload.cast<void *>(), payload.size());
-		m_webSocket->async_write(buf,
-			[this,payload = std::move(payload), cb = std::move(cb)](boost::system::error_code ec, size_t sizeWritten) {
-				if (errorCheck<OP::Write>(ec))
-					return;
+		buffer::SharedBuffer<memory::Heap> payload(std::move(_payload));
 
-				DCORE_ASSERT(sizeWritten == payload.size());
-				if (cb) cb();
-			}
+		// Submit the write to the service and bootstrap the callbacks
+		boost::asio::const_buffer buf(payload.cast<void *>(), payload.size());
+		m_webSocket->async_write(
+			std::move(buf),
+			boost::asio::bind_executor(
+				m_strand,
+				[this,payload = std::move(payload), cb = std::move(cb)](boost::system::error_code ec, size_t sizeWritten) {
+					if (errorCheck<OP::Write>(ec))
+						return;
+
+					DCORE_ASSERT(sizeWritten == payload.size());
+					if (cb) cb();
+				}
+			)
 		);
 	}
 
@@ -147,6 +155,7 @@ public:
 	mutable tcp::socket m_socket;
 	mutable std::unique_ptr<websocket::stream<ssl::stream<tcp::socket&>>> m_webSocket;
 	SslContext m_sslContext;
+	boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
 };
 
 }

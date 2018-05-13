@@ -14,7 +14,7 @@ class Command
 public:
 	Command() = default;
 
-	Command(memory::Heap data) :
+	Command(memory::HeapView data) :
 		Command(json::parse(data.begin(), data.end()))
 	{
 	}
