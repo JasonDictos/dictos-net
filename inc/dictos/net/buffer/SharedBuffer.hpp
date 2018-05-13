@@ -41,10 +41,10 @@ public:
 
 	Size size() const noexcept { return m_buff->size(); }
 	template<class T>
-	auto cast() { return m_buff->cast<T>(); }
+	auto cast() { return m_buff->template cast<T>(); }
 
 	template<class T>
-	auto cast() const { return m_buff->cast<T>(); }
+	auto cast() const { return m_buff->template cast<T>(); }
 
 	const std::byte *begin() const { return m_buff->begin(); }
 	const std::byte *end() const { return m_buff->end(); }
