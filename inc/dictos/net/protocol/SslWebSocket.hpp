@@ -7,7 +7,7 @@ namespace websocket = boost::beast::websocket;
 namespace ssl = boost::asio::ssl;
 
 /**
- * The WebSocket protocol adapts the stream to a websocket.
+ * The WebSocket protocol adapts the stream to a framed websocket stream with ssl.
  */
 class SslWebSocket : public AbstractProtocol
 {

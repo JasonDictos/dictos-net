@@ -1,9 +1,9 @@
 # Our core file list
-file(GLOB_RECURSE NetTestDeps *.cpp *.h *.hpp)
+file(GLOB_RECURSE DictosNetTestDeps *.cpp *.h *.hpp)
 
 add_executable(
-	NetTest
-	${NetTestDeps}
+	DictosNetTest
+	${DictosNetTestDeps}
 )
 
 file(GLOB_RECURSE CoreDeps ../core/inc/*.h ../core/inc/*.hpp)
@@ -15,16 +15,16 @@ source_group("Net" FILES ${NetDeps})
 hunter_add_package(Catch)
 find_package(Catch2 CONFIG REQUIRED)
 
-target_link_libraries(NetTest DictosCore DictosNet Catch2::Catch)
+target_link_libraries(DictosNetTest DictosCore DictosNet Catch2::Catch)
 
-add_test(NetTest NetTest)
+add_test(DictosNetTest DictosNetTest)
 
 include_directories(
 	.
 )
 
-target_compile_features(NetTest PUBLIC cxx_std_17)
+target_compile_features(DictosNetTest PUBLIC cxx_std_17)
 
 # Precompiled header
-set_target_properties(NetTest PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "tests.hpp")
-cotire(NetTest)
+set_target_properties(DictosNetTest PROPERTIES COTIRE_CXX_PREFIX_HEADER_INIT "tests.hpp")
+cotire(DictosNetTest)

@@ -95,6 +95,8 @@ public:
 
 	StreamPtr getStream() const { return m_stream; }
 
+	void startReader() { enqueueRead(); }
+
 protected:
 	/**
 	 * Called when we receive an incoming payload

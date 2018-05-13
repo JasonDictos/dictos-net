@@ -1,22 +1,23 @@
 #pragma once
 
-#include <boost/beast/websocket.hpp>
-
 namespace dictos::net::protocol {
 
 using tcp = boost::asio::ip::tcp;
 namespace websocket = boost::beast::websocket;
+namespace ssl = boost::asio::ssl;
 
 /**
- * The WebSocket protocol adapts the stream to a websocket.
+ * The WebSocket protocol adapts the stream to a framed websocket stream.
  */
 class WebSocket : public AbstractProtocol
 {
 public:
 	WebSocket(Address addr, EventMachine &em, config::Context &config, ErrorCallback ecb) :
 		AbstractProtocol(std::move(addr), em, config, std::move(ecb)),
-		m_socket(em)
+		m_socket(m_em),
+		m_strand(m_socket.get_executor())
 	{
+		m_webSocket = std::make_unique<websocket::stream<tcp::socket&>>(m_socket);
 	}
 
 	WebSocket(Address addr, config::Context &config, ErrorCallback ecb) :
@@ -26,30 +27,111 @@ public:
 
 	void close() noexcept override
 	{
-		// @@ TODO
+		dictos::error::block([this]{ m_webSocket->close(websocket::close_code::normal); });
 	}
 
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
 	{
-		// @@ TODO
+		m_acceptor = std::make_unique<tcp::acceptor>(
+			m_em,
+			tcp::endpoint(
+				Address::IpAddress::from_string(
+					m_localAddress.ip()
+				),
+				m_localAddress.port()
+			)
+		);
+
+		// Now issue the accept and bind the lambda to the new protocol
+		m_acceptor->async_accept(
+			staticUPtrCast<WebSocket>(newProtocol)->m_socket.lowest_layer(),
+			[this,cb = std::move(cb),&newProtocol](boost::system::error_code ec) mutable {
+				if (errorCheck<OP::Accept>(ec))
+					return;
+
+				// Successfully connected, call callers cb
+				cb();
+			}
+		);
 	}
 
 	void read(Size size, ReadCallback cb) const override
 	{
-		// @@ TODO
+		// Submit the read to the service and bootstrap the callbacks
+		m_webSocket->async_read(
+			m_buffer,
+			boost::asio::bind_executor(
+				m_strand,
+				[this,cb = std::move(cb)](boost::system::error_code ec, size_t sizeRead) {
+					boost::ignore_unused(sizeRead);
+
+					if (errorCheck<OP::Read>(ec))
+						return;
+
+					auto data = m_buffer.data();
+					auto begin = boost::asio::buffers_begin(data);
+					auto end = boost::asio::buffers_end(data);
+					cb(memory::Heap(begin, end));
+					m_buffer.consume(m_buffer.size());
+				}
+			)
+		);
 	}
 
 	void connect(ConnectCallback cb) override
 	{
-		// @@ TODO
+		// First we go through a few hoops to resolve the address
+		m_resolver = std::make_unique<tcp::resolver>(m_em);
+		m_resolver->async_resolve(tcp::v4(), m_localAddress.ip(), string::toString(m_localAddress.port()),
+			[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator results) {
+				if (errorCheck<OP::Resolve>(ec))
+					return;
+
+				// Ok connect for each resolved entry, first one that connects ok will stop the enum
+				boost::asio::async_connect(m_webSocket->next_layer(), results,
+					[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator _iter) {
+						if (errorCheck<OP::Accept>(ec))
+							return;
+
+						// Now handshake the websocket one
+						m_webSocket->handshake(m_localAddress.ip(), "/");
+						cb();
+					}
+				);
+			}
+		);
 	}
 
-	void write(memory::Heap payload, WriteCallback cb) override
+	void write(memory::Heap _payload, WriteCallback cb) override
 	{
-		// @@ TODO
+		buffer::SharedBuffer<memory::Heap> payload(std::move(_payload));
+
+		// Submit the write to the service and bootstrap the callbacks
+		boost::asio::const_buffer buf(payload.cast<void *>(), payload.size());
+		m_webSocket->async_write(
+			std::move(buf),
+			boost::asio::bind_executor(
+				m_strand,
+				[this,payload = std::move(payload), cb = std::move(cb)](boost::system::error_code ec, size_t sizeWritten) {
+					if (errorCheck<OP::Write>(ec))
+						return;
+
+					DCORE_ASSERT(sizeWritten == payload.size());
+					if (cb) cb();
+				}
+			)
+		);
 	}
 
-	websocket::stream<tcp::socket> m_socket;
+	// We lazily instantiate these as the class is used as a server or a resolving connector
+	std::unique_ptr<tcp::acceptor> m_acceptor;
+	std::unique_ptr<tcp::resolver> m_resolver;
+
+	mutable boost::beast::multi_buffer m_buffer;
+
+	mutable tcp::socket m_socket;
+	mutable std::unique_ptr<websocket::stream<tcp::socket&>> m_webSocket;
+	boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
 };
 
 }

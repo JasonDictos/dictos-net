@@ -230,7 +230,7 @@ protected:
 		return section;
 	}
 
-	mutable async::SpinLock m_lock;
+	mutable async::MutexLock m_lock;
 	std::exception_ptr m_lastError;
 
 	protocol::ProtocolUPtr m_protocol;

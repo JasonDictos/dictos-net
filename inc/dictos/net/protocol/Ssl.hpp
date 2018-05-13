@@ -30,37 +30,7 @@ public:
 
 	void accept(ProtocolUPtr &newProtocol, AcceptCallback cb) override
 	{
-		m_acceptor = std::make_unique<tcp::acceptor>(
-			m_em,
-			tcp::endpoint(
-				Address::IpAddress::from_string(
-					m_localAddress.ip()
-				),
-				m_localAddress.port()
-			)
-		);
-
-		// Now issue the accept and bind the lambda to the new protocol
-		m_acceptor->async_accept(
-			staticUPtrCast<WebSocket>(newProtocol)->m_socket.next_layer(),
-			[this,cb = std::move(cb)](boost::system::error_code ec) mutable
-			{
-				if (errorCheck<OP::Accept>(ec))
-					return;
-
-				// Successfully connected, do handshake
-				m_socket.async_handshake(ssl::stream_base::server,
-					[this,cb = std::move(cb)](boost::system::error_code ec)
-					{
-						if (errorCheck<OP::SslHandshake>(ec))
-							return;
-
-						// Phew finally, call the callers cb
-						cb();
-					}
-				);
-			}
-		);
+		// @@ TODO
 	}
 
 	void read(Size size, ReadCallback cb) const override
