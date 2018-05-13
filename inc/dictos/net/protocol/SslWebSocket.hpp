@@ -18,7 +18,7 @@ public:
 		m_sslContext(std::move(sslContext)),
 		m_strand(m_socket.get_executor())
 	{
-		m_webSocket = std::make_unique<websocket::stream<ssl::stream<tcp::socket&>>>(m_socket, m_sslContext);
+		m_webSocket = std::make_unique<websocket::stream<boost::beast::ssl_stream<tcp::socket&>>>(m_socket, m_sslContext);
 		m_webSocket->next_layer().set_verify_callback(boost::bind(&SslWebSocket::onVeirfyCertificate, this, _1, _2));
 	}
 
@@ -153,7 +153,7 @@ public:
 	mutable boost::beast::flat_buffer m_buffer;
 
 	mutable tcp::socket m_socket;
-	mutable std::unique_ptr<websocket::stream<ssl::stream<tcp::socket&>>> m_webSocket;
+	mutable std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket&>>> m_webSocket;
 	SslContext m_sslContext;
 	boost::asio::strand<boost::asio::io_context::executor_type> m_strand;
 };
