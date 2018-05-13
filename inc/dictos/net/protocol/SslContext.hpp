@@ -27,6 +27,8 @@ public:
 		return *this;
 	}
 
+	SSL_CTX * nativeContext() { return m_context->native_handle(); }
+
 	operator boost::asio::ssl::context &() { return *m_context; }
 	operator const boost::asio::ssl::context &() const { return *m_context; }
 
