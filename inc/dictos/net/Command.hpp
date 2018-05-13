@@ -12,9 +12,7 @@ namespace dictos::net {
 class Command
 {
 public:
-	Command() : m_id(Uuid::create())		// Create a new uuid implicitly upon blank instantiation
-	{
-	}
+	Command() = default;
 
 	Command(memory::HeapView data) :
 		Command(json::parse(data.begin(), data.end()))
@@ -36,9 +34,14 @@ public:
 		if (_method != j.end())
 			m_method = std::move(_method->get<std::string>());
 		if (_id != j.end())
-			m_id = Uuid::__fromString(_id->get<std::string>());	 // @@ TODO figure out the custom json overloads
+			m_id = _id->get<Uuid>();	 
 		if (_result != j.end())
 			m_result = std::move(*_result);
+
+		// If we've constructed as a request with no id, generate one here implicitly
+		if (!m_id && type() == TYPE::Request) {
+			m_id = Uuid::create();
+		}
 	}
 
 	Command(std::string_view method, json params) :
