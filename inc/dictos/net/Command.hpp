@@ -12,7 +12,9 @@ namespace dictos::net {
 class Command
 {
 public:
-	Command() = default;
+	Command() : m_id(Uuid::create())		// Create a new uuid implicitly upon blank instantiation
+	{
+	}
 
 	Command(memory::HeapView data) :
 		Command(json::parse(data.begin(), data.end()))
