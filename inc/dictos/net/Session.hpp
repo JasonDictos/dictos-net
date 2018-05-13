@@ -90,7 +90,7 @@ public:
 	// This signal is emitted when we receive an incoming request,
 	// gives the user a chance to handle i	StreamPtr getStreamPtr() const
 	signals::signal<
-		void (SessionPtr session, Command request)
+		void (SessionPtr session, const Command &request)
 		> IncomingSig;
 
 	StreamPtr getStream() const { return m_stream; }

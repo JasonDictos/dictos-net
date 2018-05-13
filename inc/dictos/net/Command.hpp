@@ -45,6 +45,30 @@ public:
 	{
 	}
 
+	Command(const Command &) = delete;
+	Command & operator = (const Command &) = delete;
+
+	Command(Command &&cmd) :
+		m_id(std::move(cmd.m_id)),					// we don't re-use the operator = here since we want to avoid Uuid self generating an id
+		m_params(std::move(cmd.m_params)),
+		m_result(std::move(cmd.m_result)),
+		m_error(std::move(cmd.m_error)),
+		m_jsonRpcVersion(std::move(cmd.m_jsonRpcVersion)),
+		m_method(std::move(cmd.m_method))
+	{
+	}
+
+	Command & operator = (Command &&cmd)
+	{
+		m_id = std::move(cmd.m_id);
+		m_params = std::move(cmd.m_params);
+		m_result = std::move(cmd.m_result);
+		m_error = std::move(cmd.m_error);
+		m_jsonRpcVersion = std::move(cmd.m_jsonRpcVersion);
+		m_method = std::move(cmd.m_method);
+		return *this;
+	}
+
 	void setResult(json result)
 	{
 		m_result = std::move(result);
@@ -53,37 +77,6 @@ public:
 	void setError(json error)
 	{
 		m_error = std::move(error);
-	}
-
-	Command(const Command &cmd)
-	{
-		operator = (cmd);
-	}
-
-	Command(Command &&cmd)
-	{
-		operator = (std::move(cmd));
-	}
-
-	Command & operator = (const Command &cmd)
-	{
-		if (this == &cmd)
-			return *this;
-
-		m_method = cmd.m_method;
-		m_params = cmd.m_params;
-		m_result = cmd.m_result;
-		m_id = cmd.m_id;
-		return *this;
-	}
-
-	Command & operator = (Command &&cmd)
-	{
-		m_method = std::move(cmd.m_method);
-		m_params = std::move(cmd.m_params);
-		m_result = std::move(cmd.m_result);
-		m_id = std::move(cmd.m_id);
-		return *this;
 	}
 
 	const std::string &method() const { return m_method; }
@@ -141,7 +134,7 @@ protected:
 	std::string m_method;
 	json m_params, m_result, m_error;
 	Uuid m_id;
-	const std::string m_jsonRpcVersion = "2.0";
+	std::string m_jsonRpcVersion = "2.0";
 };
 
 // Conversion hooks for Command to json/from json
