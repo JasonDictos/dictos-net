@@ -54,7 +54,7 @@ public:
 			DCORE_THROW(RuntimeError, "Id must not be nil for request:", cmd);
 		}
 
-		auto guard = m_mutex.lock();
+		auto guard = m_lock.lock();
 
 		// Ensure a duplicate id wasn't used
 		auto iter = m_outgoing.find(cmd.id());
@@ -103,10 +103,9 @@ protected:
 	 */
 	void onIncoming(memory::HeapView data)
 	{
-		m_readEnqueued.exchange(false);
-
 		// Parse the command and figure out what to do with it
 		Command cmd(std::move(data));
+
 		switch (cmd.type()) {
 			case Command::TYPE::Request:
 				// Register it and notify the callback
@@ -128,11 +127,9 @@ protected:
 
 	void enqueueRead()
 	{
-		if (m_readEnqueued.exchange(true) == false) {
-			m_stream->read(Size(), [session = getThisPtr()](memory::HeapView data) {
-				session->onIncoming(std::move(data));
-			});
-		}
+		m_stream->read(Size(), [session = getThisPtr()](memory::HeapView data) {
+			session->onIncoming(std::move(data));
+		});
 	}
 
 	/**
@@ -143,7 +140,7 @@ protected:
 	void onIncomingRequest(Command request)
 	{
 		// Add it to our incoming queue then trigger the callers incoming handler
-		auto guard = m_mutex.lock();
+		auto guard = m_lock.lock();
 
 		auto iter = m_incoming.find(request.id());
 
@@ -167,7 +164,7 @@ protected:
 //		LOG(session, "Received incoming result:", result);
 
 		// We should have something in the outgoing queue matching its id
-		auto guard = m_mutex.lock();
+		auto guard = m_lock.lock();
 		auto iter = m_outgoing.find(result.id());
 		if (iter == m_outgoing.end()) {
 			LOG(ERROR, "Ignoring incoming result for invalid id:", result);
@@ -199,8 +196,7 @@ protected:
 
 	signals::scoped_connection m_errCon;
 	StreamPtr m_stream;
-	async::MutexLock m_mutex;
-	std::atomic<bool> m_readEnqueued = {false};
+	async::SpinLock m_lock;
 	std::map<Uuid, RequestCtx> m_outgoing, m_incoming;
 };
 
