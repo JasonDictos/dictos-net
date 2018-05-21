@@ -78,7 +78,7 @@ public:
 		try {
 			LOGT(stream, "Reading:", size);
 
-			m_protocol->read(size, 
+			m_protocol->read(size,
 				[this,stream = getThisPtr(),cb = std::move(cb)](memory::HeapView data) {
 
 				// Now that we've received it report our rate
@@ -115,7 +115,7 @@ public:
 
 			auto size = payload.size();
 
-			m_protocol->write(std::move(payload), 
+			m_protocol->write(std::move(payload),
 				[this,size,stream = getThisPtr(),cb = std::move(cb)]() {
 
 					// Now that we've sent it report it to stats

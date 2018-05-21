@@ -105,6 +105,10 @@ public:
 				// Ok connect for each resolved entry, first one that connects ok will stop the enum
 				boost::asio::async_connect(m_webSocket->next_layer().next_layer(), results,
 					[this,cb = std::move(cb)](boost::system::error_code ec, tcp::resolver::iterator _iter) {
+
+						// Disable nagle now that the fd is allocated
+						m_webSocket->next_layer().next_layer().set_option(boost::asio::ip::tcp::no_delay(true));
+
 						if (errorCheck<OP::Accept>(ec))
 							return;
 
