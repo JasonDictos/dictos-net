@@ -22,8 +22,7 @@ public:
 		{ ErrorSig(e, getThisPtr()); });
 	}
 
-	void close()
-	{
+	void close() {
 		m_stream->close();
 	}
 
@@ -33,8 +32,7 @@ public:
 	 * upon the completion of its registration in the queues, when we
 	 * receive the associated reply.
 	 */
-	struct RequestCtx
-	{
+	struct RequestCtx {
 		Command request;
 		ReplyHandler replyHandler;
 	};
@@ -42,8 +40,7 @@ public:
 	/**
 	 * Submits the payload to the stream for async sending.
 	 */
-	void submitRequest(Command cmd, ReplyHandler replyHandler)
-	{
+	void submitRequest(Command cmd, std::optional<ReplyHandler> replyHandler = {}) {
 		// Has to be a request
 		if (cmd.type() != Command::TYPE::Request) {
 			DCORE_THROW(RuntimeError, "Invalid command type:", cmd);
@@ -67,15 +64,21 @@ public:
 
 		// Add a request context for this request id
 		auto id = cmd.id();
-		auto json = cmd.__toString();
+		auto json = string::toString(cmd);
 
-		guard.lock();
-		m_outgoing[id] = RequestCtx( {std::move(cmd), std::move(replyHandler) });
-		guard.unlock();
+		// May be unset, which implies no reply
+		if (replyHandler) {
+			LOGT(SESSION, "Registering a command context with id:", id);
+			guard.lock();
+			m_outgoing[id] = RequestCtx(
+						{std::move(cmd), std::move(replyHandler.value())
+					});
+			guard.unlock();
+		}
 
 		// Submit it over the wire
-		LOG(session, "Sending request:", json);
-		m_stream->write(json);
+		LOGT(SESSION, "Sending request:", json);
+		m_stream->write(std::move(json));
 
 		// And enqueue a read
 		enqueueRead();
@@ -94,8 +97,6 @@ public:
 		> IncomingSig;
 
 	StreamPtr getStream() const { return m_stream; }
-
-	void startReader() { enqueueRead(); }
 
 protected:
 	/**
@@ -164,7 +165,7 @@ protected:
 	 */
 	void onIncomingResult(Command result)
 	{
-//		LOG(session, "Received incoming result:", result);
+		LOG(SESSION, "Received incoming result:", result);
 
 		// We should have something in the outgoing queue matching its id
 		auto guard = m_mutex.lock();
