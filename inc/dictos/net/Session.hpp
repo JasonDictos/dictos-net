@@ -8,7 +8,7 @@ namespace dictos::net {
  * a peer session.
  */
 class Session :
-	public std::enable_shared_from_this<Session>
+	public util::SharedFromThis<Session>
 {
 public:
 	typedef std::function<void(Command result)> ReplyHandler;
@@ -19,7 +19,7 @@ public:
 		// Link to the streams error signal
 		m_errCon = m_stream->ErrorSig.connect([this](
 			const dictos::error::Exception &e, OP op, StreamPtr stream)
-		{ ErrorSig(e, getThisPtr()); });
+		{ ErrorSig(e, thisPtr()); });
 	}
 
 	void close() {
@@ -78,7 +78,9 @@ public:
 
 		// Submit it over the wire
 		LOGT(SESSION, "Sending request:", json);
-		m_stream->write(std::move(json));
+		m_stream->write(std::move(json), [this, &cmd]() {
+			WriteSig(thisPtr(), cmd);
+		});
 
 		// And enqueue a read
 		enqueueRead();
@@ -91,12 +93,17 @@ public:
 		> ErrorSig;
 
 	// This signal is emitted when we receive an incoming request,
-	// gives the user a chance to handle i	StreamPtr getStreamPtr() const
+	// gives the user a chance to handle it.
 	signals::signal<
 		void (SessionPtr session, const Command &request)
 		> IncomingSig;
 
-	StreamPtr getStream() const { return m_stream; }
+	// This signal gets raised every time we successfully complete a write.
+	signals::signal<
+		void (SessionPtr session, const Command &request)
+		> WriteSig;
+
+	StreamPtr stream() const { return m_stream; }
 
 protected:
 	/**
@@ -130,7 +137,7 @@ protected:
 	void enqueueRead()
 	{
 		if (m_readEnqueued.exchange(true) == false) {
-			m_stream->read(Size(), [session = getThisPtr()](memory::HeapView data) {
+			m_stream->read(Size(), [session = thisPtr()](memory::HeapView data) {
 				session->onIncoming(std::move(data));
 			});
 		}
@@ -155,7 +162,7 @@ protected:
 
 		guard.unlock();
 
-		IncomingSig(getThisPtr(), std::move(request));
+		IncomingSig(thisPtr(), std::move(request));
 	}
 
 	/**
@@ -184,18 +191,12 @@ protected:
 			context.replyHandler(std::move(result));
 		} catch (dictos::error::Exception &e) {
 			LOG(ERROR, "Result handler threw:", e);
-			dictos::error::block([&](){ ErrorSig(e, getThisPtr()); });
+			dictos::error::block([&](){ ErrorSig(e, thisPtr()); });
 		}
 	}
 
-	SessionPtr getThisPtr() const
-	{
-		return const_cast<Session *>(this)->enable_shared_from_this<Session>::shared_from_this();
-	}
-
-	void onStreamError(const dictos::error::Exception &e, OP op, StreamPtr stream)
-	{
-		ErrorSig(e, getThisPtr());
+	void onStreamError(const dictos::error::Exception &e, OP op, StreamPtr stream) {
+		ErrorSig(e, thisPtr());
 	}
 
 	signals::scoped_connection m_errCon;

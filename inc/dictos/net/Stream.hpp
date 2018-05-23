@@ -8,7 +8,7 @@ namespace dictos::net {
  */
 class Stream :
 	public config::Context,
-	public std::enable_shared_from_this<Stream>
+	public util::SharedFromThis<Stream>
 {
 public:
 	~Stream()
@@ -36,14 +36,8 @@ public:
 	{
 	}
 
-	std::string __toString() const
-	{
+	std::string __toString() const {
 		return string::toString("Stream(", getLocalAddress(), ")");
-	}
-
-	StreamPtr getStreamPtr() const
-	{
-		return const_cast<Stream *>(this)->enable_shared_from_this<Stream>::shared_from_this();
 	}
 
 	void accept(AcceptCallback cb)
@@ -59,7 +53,7 @@ public:
 			// ptr so it can set it up for us
 			m_protocol->accept(
 				protocol,
-				[this,bookmark = getStreamPtr(),cb = std::move(cb),newStream = std::move(newStream)]() {
+				[this,bookmark = thisPtr(),cb = std::move(cb),newStream = std::move(newStream)]() {
 					// Great we successfully accepted a new connection
 					LOGT(stream, "Successfully accepted new connection from:", newStream->getRemoteAddress());
 					cb(std::move(newStream));

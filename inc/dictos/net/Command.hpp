@@ -55,7 +55,8 @@ public:
 	Command(std::string_view method, json params) :
 		m_method(method.begin(), method.end()),
 		m_params(std::move(params)),
-		m_type(TYPE::Request)
+		m_type(TYPE::Request), 
+		m_id(Uuid::create())
 	{
 	}
 
@@ -143,7 +144,7 @@ public:
 protected:
 	std::string m_method;
 	json m_params, m_result, m_error;
-	Uuid m_id;
+	Uuid m_id = {};
 	std::string m_jsonRpcVersion = "2.0";
 	TYPE m_type = TYPE::Init;
 };

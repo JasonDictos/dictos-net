@@ -2,8 +2,7 @@
 
 namespace dictos::net::protocol {
 
-	enum class TYPE
-	{
+	enum class TYPE {
 		Init,
 		Tcp,
 		Ssl,
@@ -17,30 +16,27 @@ namespace dictos::net::protocol {
 }
 
 // Allow TYPE to be renderable in our log/error apis
-inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol::TYPE type)
-{
+inline std::ostream & operator << (std::ostream &stream, ::dictos::net::protocol::TYPE type) {
 	using TYPE = ::dictos::net::protocol::TYPE;
 
-	switch (type)
-	{
+	switch (type) {
 		case TYPE::Init:
-			return stream << "Init";
+			return stream << "init";
 		case TYPE::Tcp:
-			return stream << "Tcp";
+			return stream << "tcp";
 		case TYPE::Ssl:
-			return stream << "Ssl";
+			return stream << "ssl";
 		case TYPE::UnixDomain:
-			return stream << "UnixDomain";
+			return stream << "unix";
 		case TYPE::File:
-			return stream << "File";
+			return stream << "file";
 		case TYPE::Pipe:
-			return stream << "Pipe";
+			return stream << "pipe";
 		case TYPE::WebSocket:
-			return stream << "WebSocket";
+			return stream << "ws";
 		case TYPE::SslWebSocket:
-			return stream << "SslWebSocket";
+			return stream << "wss";
 		default:
-			DCORE_ASSERT(!"Invalid protocol type ");
-			return stream << "Invalid(" << static_cast<uint32_t>(type) << ")";
+			DCORE_THROW(RuntimeError, "Invalid protocol type:",  static_cast<uint32_t>(type));
 	}
 }
