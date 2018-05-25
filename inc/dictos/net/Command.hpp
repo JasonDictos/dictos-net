@@ -27,16 +27,24 @@ public:
 		auto _result = j.find("result");
 		auto _id = j.find("id");
 
-		if (_param != j.end())
+		if (_param != j.end()) {
 			m_params = std::move(*_param);
-		if (_error != j.end())
+			m_type = TYPE::Request;
+		}
+		if (_error != j.end()) {
 			m_error = std::move(*_error);
-		if (_method != j.end())
+			m_type = TYPE::Error;
+		}
+		if (_method != j.end()) {
 			m_method = std::move(_method->get<std::string>());
+			m_type = TYPE::Request;
+		}
 		if (_id != j.end())
 			m_id = _id->get<Uuid>();	 
-		if (_result != j.end())
+		if (_result != j.end()) {
 			m_result = std::move(*_result);
+			m_type = TYPE::Result;
+		}
 
 		// If we've constructed as a request with no id, generate one here implicitly
 		if (!m_id && type() == TYPE::Request) {
@@ -46,7 +54,9 @@ public:
 
 	Command(std::string_view method, json params) :
 		m_method(method.begin(), method.end()),
-		m_params(std::move(params))
+		m_params(std::move(params)),
+		m_type(TYPE::Request), 
+		m_id(Uuid::create())
 	{
 	}
 
@@ -59,8 +69,10 @@ public:
 		m_result(std::move(cmd.m_result)),
 		m_error(std::move(cmd.m_error)),
 		m_jsonRpcVersion(std::move(cmd.m_jsonRpcVersion)),
-		m_method(std::move(cmd.m_method))
+		m_method(std::move(cmd.m_method)),
+		m_type(cmd.m_type)
 	{
+		cmd.m_type = TYPE::Init;
 	}
 
 	Command & operator = (Command &&cmd)
@@ -71,17 +83,21 @@ public:
 		m_error = std::move(cmd.m_error);
 		m_jsonRpcVersion = std::move(cmd.m_jsonRpcVersion);
 		m_method = std::move(cmd.m_method);
+		m_type = cmd.m_type;
+		cmd.m_type = TYPE::Init;
 		return *this;
 	}
 
 	void setResult(json result)
 	{
 		m_result = std::move(result);
+		m_type = TYPE::Result;
 	}
 
 	void setError(json error)
 	{
 		m_error = std::move(error);
+		m_type = TYPE::Error;
 	}
 
 	const std::string &method() const { return m_method; }
@@ -118,17 +134,7 @@ public:
 		return json(*this).dump();
 	}
 
-	TYPE type() const
-	{
-		if (!m_error.empty())
-			return TYPE::Error;
-		else if (!m_result.empty())
-			return TYPE::Result;
-		else if (!m_params.empty() && !m_method.empty())
-			return TYPE::Request;
-		else
-			return TYPE::Init;
-	}
+	TYPE type() const { return m_type; }
 
 	bool operator < (const Command &command) const
 	{
@@ -138,8 +144,9 @@ public:
 protected:
 	std::string m_method;
 	json m_params, m_result, m_error;
-	Uuid m_id;
+	Uuid m_id = {};
 	std::string m_jsonRpcVersion = "2.0";
+	TYPE m_type = TYPE::Init;
 };
 
 // Conversion hooks for Command to json/from json

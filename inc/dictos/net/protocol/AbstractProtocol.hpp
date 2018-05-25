@@ -47,7 +47,7 @@ public:
 	Address getLocalAddress() const { return m_localAddress; }
 	Address getRemoteAddress() const { return m_localAddress; }
 
-	EventMachine & eventMachine() { return m_em; } 
+	EventMachine & eventMachine() { return m_em; }
 protected:
 
 	/**

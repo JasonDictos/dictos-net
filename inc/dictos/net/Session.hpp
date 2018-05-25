@@ -8,7 +8,7 @@ namespace dictos::net {
  * a peer session.
  */
 class Session :
-	public std::enable_shared_from_this<Session>
+	public util::SharedFromThis<Session>
 {
 public:
 	typedef std::function<void(Command result)> ReplyHandler;
@@ -19,11 +19,10 @@ public:
 		// Link to the streams error signal
 		m_errCon = m_stream->ErrorSig.connect([this](
 			const dictos::error::Exception &e, OP op, StreamPtr stream)
-		{ ErrorSig(e, getThisPtr()); });
+		{ ErrorSig(e, thisPtr()); });
 	}
 
-	void close()
-	{
+	void close() {
 		m_stream->close();
 	}
 
@@ -33,8 +32,7 @@ public:
 	 * upon the completion of its registration in the queues, when we
 	 * receive the associated reply.
 	 */
-	struct RequestCtx
-	{
+	struct RequestCtx {
 		Command request;
 		ReplyHandler replyHandler;
 	};
@@ -42,8 +40,7 @@ public:
 	/**
 	 * Submits the payload to the stream for async sending.
 	 */
-	void submitRequest(Command cmd, ReplyHandler replyHandler)
-	{
+	void submitRequest(Command cmd, std::optional<ReplyHandler> replyHandler = {}) {
 		// Has to be a request
 		if (cmd.type() != Command::TYPE::Request) {
 			DCORE_THROW(RuntimeError, "Invalid command type:", cmd);
@@ -67,15 +64,23 @@ public:
 
 		// Add a request context for this request id
 		auto id = cmd.id();
-		auto json = cmd.__toString();
+		auto json = string::toString(cmd);
 
-		guard.lock();
-		m_outgoing[id] = RequestCtx( {std::move(cmd), std::move(replyHandler) });
-		guard.unlock();
+		// May be unset, which implies no reply
+		if (replyHandler) {
+			LOGT(SESSION, "Registering a command context with id:", id);
+			guard.lock();
+			m_outgoing[id] = RequestCtx(
+						{std::move(cmd), std::move(replyHandler.value())
+					});
+			guard.unlock();
+		}
 
 		// Submit it over the wire
-		LOG(session, "Sending request:", json);
-		m_stream->write(json);
+		LOGT(SESSION, "Sending request:", json);
+		m_stream->write(std::move(json), [this, &cmd]() {
+			WriteSig(thisPtr(), cmd);
+		});
 
 		// And enqueue a read
 		enqueueRead();
@@ -88,14 +93,17 @@ public:
 		> ErrorSig;
 
 	// This signal is emitted when we receive an incoming request,
-	// gives the user a chance to handle i	StreamPtr getStreamPtr() const
+	// gives the user a chance to handle it.
 	signals::signal<
 		void (SessionPtr session, const Command &request)
 		> IncomingSig;
 
-	StreamPtr getStream() const { return m_stream; }
+	// This signal gets raised every time we successfully complete a write.
+	signals::signal<
+		void (SessionPtr session, const Command &request)
+		> WriteSig;
 
-	void startReader() { enqueueRead(); }
+	StreamPtr stream() const { return m_stream; }
 
 protected:
 	/**
@@ -151,7 +159,7 @@ protected:
 
 		guard.unlock();
 
-		IncomingSig(getThisPtr(), std::move(request));
+		IncomingSig(thisPtr(), std::move(request));
 	}
 
 	/**
@@ -161,7 +169,7 @@ protected:
 	 */
 	void onIncomingResult(Command result)
 	{
-//		LOG(session, "Received incoming result:", result);
+		LOG(SESSION, "Received incoming result:", result);
 
 		// We should have something in the outgoing queue matching its id
 		auto guard = m_lock.lock();
@@ -180,18 +188,12 @@ protected:
 			context.replyHandler(std::move(result));
 		} catch (dictos::error::Exception &e) {
 			LOG(ERROR, "Result handler threw:", e);
-			dictos::error::block([&](){ ErrorSig(e, getThisPtr()); });
+			dictos::error::block([&](){ ErrorSig(e, thisPtr()); });
 		}
 	}
 
-	SessionPtr getThisPtr() const
-	{
-		return const_cast<Session *>(this)->enable_shared_from_this<Session>::shared_from_this();
-	}
-
-	void onStreamError(const dictos::error::Exception &e, OP op, StreamPtr stream)
-	{
-		ErrorSig(e, getThisPtr());
+	void onStreamError(const dictos::error::Exception &e, OP op, StreamPtr stream) {
+		ErrorSig(e, thisPtr());
 	}
 
 	signals::scoped_connection m_errCon;

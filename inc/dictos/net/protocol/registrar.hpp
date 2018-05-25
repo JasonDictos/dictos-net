@@ -4,8 +4,7 @@ namespace {
 
 using TYPE = dictos::net::protocol::TYPE;
 
-std::map<std::string, TYPE> &PrefixMap()
-{
+std::map<std::string, TYPE> &PrefixMap() {
 	static std::map<std::string, TYPE> prefixMap = {
 		{"tcp", TYPE::Tcp},
 		{"tcpv4", TYPE::Tcp},
@@ -27,8 +26,7 @@ std::map<std::string, TYPE> &PrefixMap()
 
 namespace dictos::net::protocol {
 
-inline TYPE lookup(const std::string &prefix)
-{
+inline TYPE lookup(const std::string &prefix) {
 	auto iter = PrefixMap().find(prefix);
 	if (iter == PrefixMap().end())
 		DCORE_THROW(NotFound, "Invalid protocol prefix:", prefix);
@@ -36,3 +34,4 @@ inline TYPE lookup(const std::string &prefix)
 }
 
 }
+

@@ -25,7 +25,7 @@ public:
 	EventMachine & operator = (EventMachine &&em) = delete;
 	EventMachine & operator = (const EventMachine &em) = delete;
 
-	virtual ~EventMachine()
+	virtual ~EventMachine() noexcept
 	{
 		for(auto &thread : m_threads) {
 			thread->cancel();
@@ -37,19 +37,43 @@ public:
 	void run()
 	{
 		LOGT(net, "Run called");
-		m_asioContext.run();
+		try {
+			m_asioContext.run();
+		} catch (dictos::error::Exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		} catch (std::exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		}
 	}
 
 	void runOne()
 	{
 		LOGT(net, "Run one called");
-		m_asioContext.run_one();
+		try {
+			m_asioContext.run_one();
+		} catch (dictos::error::Exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		} catch (std::exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		}
 	}
 
 	void stop()
 	{
 		LOGT(net, "Stop called");
-		m_asioContext.stop();
+		try {
+			m_asioContext.stop();
+		} catch (dictos::error::Exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		} catch (std::exception &e) {
+			LOGT(CRITICAL, "Exception:", e);
+			throw;
+		}
 	}
 
 	operator boost::asio::io_context & () noexcept { return m_asioContext; }

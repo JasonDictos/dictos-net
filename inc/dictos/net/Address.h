@@ -7,7 +7,7 @@ namespace dictos::net {
  * includes the port, can be an ip address, domain name,
  * or a file path (unix domain). Custom values can be
  * defined by registering a new protocol prefix then
- * implementing a new protocol object derived from 
+ * implementing a new protocol object derived from
  * protocol::AbstractProtocol.
  */
 class Address
@@ -41,5 +41,14 @@ protected:
 	IpAddress m_address;
 	PROTOCOL_TYPE m_protocol = PROTOCOL_TYPE::Init;
 };
+
+}
+
+namespace dictos::string {
+
+template<>
+inline net::Address fromString(const std::string_view &string) {
+	return net::Address(std::string(string.begin(), string.end()));
+}
 
 }
